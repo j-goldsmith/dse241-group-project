@@ -13,15 +13,15 @@
     <script type="application/javascript">
         d3.queue()
             .defer(d3.json, "https://mas-dse.github.io/DSE241/2018/data/exercise2-olympics.json")
-            .defer(d3.json, "https://unpkg.com/world-atlas@1/world/50m.json")
+            .defer(d3.json, "https://raw.githubusercontent.com/jdamiani27/Data-Visualization-and-D3/master/lesson4/world_countries.json")
             .await(init);
 
         function init(error, olympics, atlas) {
             if(error) { console.log(error); }
 
             d3.select("body")
-                .data([olympics,atlas])
-                .call(viz);
+                .datum({'olypmics':olympics,'atlas':atlas})
+                .call(viz());
         }
     </script>
 </body>
