@@ -1,19 +1,51 @@
 'use strict';
+var colorWheel = [
+    '#f7f7f7',
+    '#d9d9d9',
+    '#bdbdbd',
+    '#969696',
+    '#737373',
+    '#525252',
+    '#252525'
+];
 function filter(){
     var rootElement, countryElement, genderElement, medalElement, yearElement;
     var drilldown;
 
     var options = {
         selectedCountries:[],
+
         selectedGenders:['Male','Female'],
+        genderOptions:['Male','Female'],
+
         selectedMedalTypes:['Gold', 'Silver', 'Bronze'],
-        selectedYears:[1926,2006]
+        medalOptions:['Gold','Silver','Bronze'],
+
+        selectedYears:[1926,2006],
+        yearOptions:[1926,2006]
     };
 
     function init(parent){
-        rootElement = d3.select(parent).append('div');
-        countryElement = rootElement.append('ul')
-            .attr('class','countries list-group')
+        rootElement = d3.select(parent)
+            .append('div')
+                .attr('class','col-sm');
+
+        var row = rootElement.append('div').attr('class','row');
+
+        genderElement = row.append('div')
+            .attr('class','col-sm')
+            .text('gender filter');
+
+        medalElement = row.append('div')
+            .attr('class','col-sm')
+            .text('medal filter');
+
+        yearElement = rootElement
+            .append('div')
+                .attr('class','row')
+                .append('div')
+                    .attr('class','col-sm')
+                .text('year filter');
     }
 
     function render(){
@@ -21,28 +53,14 @@ function filter(){
             return;
         }
 
-        countryElement.selectAll('li').remove();
-        var liEntered = countryElement.selectAll('li')
-            .data(options.selectedCountries)
-            .enter().append('li')
-            .attr('class','list-group-item');
 
-        liEntered.append('button')
-            .attr('class','close float-left')
-            .append('span')
-                .html('&times;');
 
-        liEntered.append('span')
-            .attr('class','float-left')
-            .text(function (d) {
-                return d;
-            });
     }
 
     function refresh(){
         render();
         if(drilldown) {
-            drilldown.refresh(options);
+            drilldown.refresh(this);
         }
     }
 
@@ -86,7 +104,7 @@ function filter(){
 
     _filter.setDrilldown = function(value){
         drilldown = value;
-        drilldown.refresh(options);
+        drilldown.refresh(_filter);
 
         return _filter;
     };
@@ -94,30 +112,30 @@ function filter(){
 }
 
 function map() {
-    var rootElement, countryGroupElement;
+    var rootElement, svgElement, countryGroupElement;
     var currentData, filter;
 
-    var width = 960,
+    var width = 500,
         height = 500,
-        projection = d3.geoMercator()
-            .scale(150)
-            .translate([width / 2, height / 2]),
-        zoomScale = (width - 1) / 2 / Math.PI,
+        projection,
         colorScale = d3.scaleLinear()
             .domain([0, 300])
-            .range(["#f7f7f7", "#252525"]);
+            .range([colorWheel[0], colorWheel[6]]);
 
 
     function init(parent){
         rootElement = d3.select(parent)
-            .append('svg')
+            .append('div')
+            .attr('class','col-sm');
+
+        svgElement = rootElement.append('svg')
             .attr('class','map');
 
-        countryGroupElement = rootElement
+        countryGroupElement = svgElement
             .append('g')
             .attr('class','countries');
 
-        rootElement.call(
+        svgElement.call(
             d3.zoom()
                 .scaleExtent([1, 8])
                 .on("zoom", function(){
@@ -127,6 +145,9 @@ function map() {
     }
 
     function render(){
+        projection = d3.geoMercator()
+            .scale(100)
+            .translate([width / 2, height / 2]);
         var geoPath = d3.geoPath().projection(projection);
 
         countryGroupElement
@@ -208,9 +229,60 @@ function map() {
 }
 
 function drilldown() {
-    var rootElement;
+    var rootElement, countryElement;
+    var _filter;
+    var width = 500,
+        height = 800;
+
     function init(parent){
-        rootElement = d3.select(parent).append('div');
+        rootElement = d3.select(parent)
+            .append('svg')
+            .attr('width',width)
+            .attr('height',height);
+
+        countryElement = rootElement.append('g')
+            .attr('width',300)
+            .attr('height',350)
+            .attr("transform", "translate(0,700) rotate(-90)");
+
+    }
+
+    function render(){
+        countryElement.selectAll('rect').remove();
+        countryElement.selectAll('rect')
+            .data(_filter.selectedCountries())
+            .enter().append('rect')
+            .attr('class','selected-country')
+            .attr('height',50)
+            .attr('width',300)
+            .attr('x',0)
+            .attr('y',function(d,i){
+                return i*50;
+            }).attr('style','fill:white;stroke:'+colorWheel[1]+';')
+            .on('click',function(d){
+                _filter.deselectCountry(d);
+            });
+
+        countryElement.selectAll('text').remove();
+        countryElement.selectAll('text')
+            .data(_filter.selectedCountries())
+            .enter().append('text')
+                .attr('class','selected-country')
+                .attr('height',50)
+                .attr('width',300)
+                .attr('x',25)
+                .attr('y',function(d,i){
+                    return (i*50)+ 30;
+                })
+                .html(function(d){ return d;})
+                .on('click',function(d){
+                    _filter.deselectCountry(d);
+                });
+
+
+
+
+
     }
     function _drilldown(selection) {
         selection.each(function(data,i) {
@@ -220,14 +292,18 @@ function drilldown() {
         });
     }
 
-    _drilldown.refresh = function(filterOptions){
+    _drilldown.refresh = function(filterInstance){
+       // _filter = filterInstance;
         if(rootElement) {
-
+            render();
         }
 
         return _drilldown;
     };
-
+    _drilldown.setFilter = function(value){
+        _filter = value;
+        return _drilldown;
+    }
     return _drilldown;
 }
 
@@ -235,27 +311,40 @@ function viz() {
     var selectedCountries = [];
     var width = 960,
         height = 500;
-    var rootElement;
+    var rootElement, leftColElement, rightColElement;
     var medalCountColor = d3.scaleLinear()
         .domain([0, 350])
         .range(["#f7f7f7", "#252525"]);
 
     function _viz(selection) {
         selection.each(function (data, i) {
-            rootElement = d3.select(this);
+            rootElement = d3.select(this)
+                .append('div')
+                    .attr('class','container');
+
+            var row = rootElement.append('div').attr('class','row');
+            leftColElement = row.append('div').attr('class','col-sm');
+            rightColElement = row.append('div').attr('class','col-sm');
 
             var filterInstance = filter()
-                .selectedCountries(selectedCountries);;
+                .selectedCountries(selectedCountries);
             var drilldownInstance = drilldown();
             var mapInstance = map()
                 .colorScale(medalCountColor);
 
-            rootElement.call(mapInstance);
-            rootElement.call(filterInstance);
-            rootElement.call(drilldownInstance);
+            leftColElement.append('div')
+                .attr('class','row')
+                .call(mapInstance);
+            leftColElement.append('div')
+                .attr('class','row')
+                .call(filterInstance);
+
+            rightColElement.call(drilldownInstance);
+
+            mapInstance.setFilter(filterInstance);
+            drilldownInstance.setFilter(filterInstance);
 
             filterInstance.setDrilldown(drilldownInstance);
-            mapInstance.setFilter(filterInstance);
         });
     }
 
