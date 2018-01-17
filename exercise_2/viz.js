@@ -9,6 +9,7 @@ var colorWheel = [
     '#252525'
 ];
 var medalColors = ["#d5a500", '#b7b7b7', "#a17419"];
+
 function filter() {
     var rootElement, countryElement, genderElement, medalElement, yearElement;
     var drilldown;
@@ -127,7 +128,24 @@ function filter() {
         refresh()
         return _filter;
     };
-
+    _filter.selectedYears = function (value) {
+        if (!arguments.length) return options.selectedYears;
+        options.selectedYears = value;
+        refresh()
+        return _filter;
+    };
+    _filter.selectedGenders = function (value) {
+        if (!arguments.length) return options.selectedGenders;
+        options.selectedGenders = value;
+        refresh()
+        return _filter;
+    };
+    _filter.selectededMedalTypes = function (value) {
+        if (!arguments.length) return options.selectedMedalTypes;
+        options.selectedMedalTypes = value;
+        refresh()
+        return _filter;
+    };
     _filter.selectCountry = function (value) {
         if (options.selectedCountries.indexOf(value) < 0) {
             options.selectedCountries.push(value);
@@ -329,9 +347,8 @@ function drilldown() {
     var width = 500,
         height = 800;
     var y = d3.scaleLinear()
-        .rangeRound([450, 0])
-        .domain([0, d3.max(_filter.filteredData(), function(d) { return d.total; })])
-        .nice();
+        .rangeRound([450, 0]);
+
 
     var medalColorScale = d3.scaleOrdinal()
         .range(medalColors)
@@ -355,6 +372,8 @@ function drilldown() {
     }
 
     function render() {
+        var data = dataTransform();
+
         countryElement.selectAll('rect').remove();
         countryElement.selectAll('rect')
             .data(_filter.selectedCountries())
@@ -389,12 +408,91 @@ function drilldown() {
                 _filter.deselectCountry(d);
             });
 
+        var max =  d3.max(data,
+            function(d) {
+                return d.gold+d.silver+d.bronze;
+    });
+        y.domain([
+            0,
+           max
+        ]);
+
+        stackedBarElement.selectAll(".layer").remove();
+
+        var layers = d3.stack().keys(['gold','silver','bronze'])(data);
+
+        var layer = stackedBarElement.selectAll(".layer")
+            .data(layers)
+            .enter().append("g")
+            .attr("class", "layer")
+            .style("fill", function(d, i) { return medalColorScale(i); });
+
+        layer.selectAll("rect")
+            .data(function(d) { return d; })
+            .enter().append("rect")
+            .attr("x", function(d,i) { return (i*50); })
+            .attr("y", function(d) { return y(d[1]); })
+            .attr("height", function(d) { return y(d[0]) - y(d[1]); })
+            .attr("width", 50);
+    }
+
+    function dataTransform() {
+        if(!currentData){
+            return [];
+        }
+
+        return _.map(_filter.selectedCountries(), function(countryName){
+            var countryData = _.filter(currentData,
+                function(d) {
+                    return d.country === countryName;
+                });
+
+            var filteredAggregates = _.map(countryData,function(d){
+                var eligleYears = _.filter(d.medalCounts, function(m){
+                    return m.year >= _filter.selectedYears()[0] & m.year <= _filter.selectedYears()[1];
+                });
+
+                var genderAggregates = _.map(eligleYears, function(e){
+                    var results = [];
+                    if(_filter.selectedGenders().indexOf('Male') > -1){
+                        results.push(e.men);
+                    }
+                    if(_filter.selectedGenders().indexOf('Female') > -1){
+                        results.push(e.women);
+                    }
+
+                    return _.reduce(results, function(agg, x){
+                        return [
+                            agg[0] + x[0],
+                            agg[1] + x[1],
+                            agg[2] + x[2]
+                        ];
+                    },[0,0,0])
+                });
+
+                return _.reduce(genderAggregates, function(agg, x){
+                        return [
+                            agg[0] + x[0],
+                            agg[1] + x[1],
+                            agg[2] + x[2]
+                        ];
+                    },[0,0,0]);
+
+            });
+
+            return {
+                'country':countryName,
+                'gold': filteredAggregates[0][0],
+                'silver': filteredAggregates[0][1],
+                'bronze': filteredAggregates[0][2]
+            };
+        });
 
     }
 
     function _drilldown(selection) {
         selection.each(function (data, i) {
-            currentData = data;
+            currentData = data.medalCounts;
             if (!rootElement) {
                 init(this);
             }
