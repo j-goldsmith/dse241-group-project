@@ -8,7 +8,7 @@ var colorWheel = [
     '#525252',
     '#252525'
 ];
-var medalColors = ["#d5a500", '#b7b7b7', "#a17419"];
+var medalColors = ["#a17419",'#b7b7b7',"#d5a500"];
 
 function filter() {
     var rootElement, countryElement, genderElement, medalElement, yearElement;
@@ -146,6 +146,7 @@ function filter() {
         refresh()
         return _filter;
     };
+
     _filter.selectCountry = function (value) {
         if (options.selectedCountries.indexOf(value) < 0) {
             options.selectedCountries.push(value);
@@ -157,7 +158,6 @@ function filter() {
 
         return _filter;
     };
-
     _filter.deselectCountry = function (value) {
         var i = options.selectedCountries.indexOf(value);
         if (i > -1) {
@@ -179,7 +179,6 @@ function filter() {
 
         return _filter;
     };
-
     _filter.deselectGender = function (value) {
         var i = options.selectedGenders.indexOf(value);
         if (i > -1) {
@@ -201,7 +200,6 @@ function filter() {
 
         return _filter;
     };
-
     _filter.deselectMedalType = function (value) {
         var i = options.selectedMedalTypes.indexOf(value);
         if (i > -1) {
@@ -218,6 +216,7 @@ function filter() {
 
         return _filter;
     };
+
     return _filter;
 }
 
@@ -352,7 +351,7 @@ function drilldown() {
 
     var medalColorScale = d3.scaleOrdinal()
         .range(medalColors)
-        .domain(['Gold', 'Silver', 'Bronze']);
+        .domain(['bronze','silver','gold']);
 
     function init(parent) {
         rootElement = d3.select(parent)
@@ -379,11 +378,11 @@ function drilldown() {
             .data(_filter.selectedCountries())
             .enter().append('rect')
             .attr('class', 'selected-country')
-            .attr('height', 50)
+            .attr('height', 40)
             .attr('width', 200)
             .attr('x', 0)
             .attr('y', function (d, i) {
-                return i * 50;
+                return (i * 50)+5;
             }).attr('style', 'fill:white;stroke:' + colorWheel[1] + ';')
             .on('click', function (d) {
                 _filter.deselectCountry(d);
@@ -419,21 +418,23 @@ function drilldown() {
 
         stackedBarElement.selectAll(".layer").remove();
 
-        var layers = d3.stack().keys(['gold','silver','bronze'])(data);
+        var layers = d3.stack().keys(['bronze','silver','gold'])(data);
 
         var layer = stackedBarElement.selectAll(".layer")
             .data(layers)
             .enter().append("g")
             .attr("class", "layer")
+            .attr("transform", "translate(0,50)")
             .style("fill", function(d, i) { return medalColorScale(i); });
 
         layer.selectAll("rect")
             .data(function(d) { return d; })
             .enter().append("rect")
-            .attr("x", function(d,i) { return (i*50); })
+            .attr("x", function(d,i) { return (i*50)+5; })
             .attr("y", function(d) { return y(d[1]); })
+            .attr('style','stroke:'+colorWheel[1])
             .attr("height", function(d) { return y(d[0]) - y(d[1]); })
-            .attr("width", 50);
+            .attr("width", 40);
     }
 
     function dataTransform() {
