@@ -1,17 +1,108 @@
 'use strict';
+
 var colorWheel = [
     '#f7f7f7',
     '#d9d9d9',
     '#bdbdbd',
     '#969696',
     '#737373',
-    '#525252',
-    '#252525'
+    '#525252'
+    //'#252525'
 ];
 var medalColors = ["#a17419",'#b7b7b7',"#d5a500"];
+var medalCountColor = d3.scaleLinear()
+    .range(["#f7f7f7", "#525252"]);
+var max;
+
+function dataAggregateTransform(data, _filter) {
+    if(!data){
+        return [];
+    }
+
+    if(_filter) {
+        return _.map(_filter.selectedCountries(), function (countryName) {
+            var countryData = _.filter(data,
+                function (d) {
+                    return d.country === countryName;
+                });
+
+            var filteredAggregates = _.map(countryData, function (d) {
+                var eligleYears = _.filter(d.medalCounts, function (m) {
+                    return m.year >= _filter.selectedYears()[0] & m.year <= _filter.selectedYears()[1];
+                });
+
+                var genderAggregates = _.map(eligleYears, function (e) {
+                    var results = [];
+                    if (_filter.selectedGenders().indexOf('Male') > -1) {
+                        results.push(e.men);
+                    }
+                    if (_filter.selectedGenders().indexOf('Female') > -1) {
+                        results.push(e.women);
+                    }
+
+                    return _.reduce(results, function (agg, x) {
+                        return [
+                            agg[0] + x[0],
+                            agg[1] + x[1],
+                            agg[2] + x[2]
+                        ];
+                    }, [0, 0, 0])
+                });
+
+                return _.reduce(genderAggregates, function (agg, x) {
+                    return [
+                        agg[0] + x[0],
+                        agg[1] + x[1],
+                        agg[2] + x[2]
+                    ];
+                }, [0, 0, 0]);
+
+            });
+
+            return {
+                'country': countryName,
+                'gold': filteredAggregates.length > 0 ? filteredAggregates[0][0]:0,
+                'silver': filteredAggregates.length > 0 ? filteredAggregates[0][1]:0,
+                'bronze': filteredAggregates.length > 0 ? filteredAggregates[0][2]:0
+            };
+        });
+    }
+    else {
+        return _.map(data, function (d) {
+
+            var men = _.map(d.medalCounts, function(m){
+                return m.men
+            });
+
+            var women = _.map(d.medalCounts, function(m){
+                return m.women
+            });
+
+            var results = [];
+            results = results.concat(men);
+            results = results.concat(women);
+
+            var filteredAggregates = _.reduce(results, function (agg, x) {
+                return [
+                    agg[0] + x[0],
+                    agg[1] + x[1],
+                    agg[2] + x[2]
+                ];
+            }, [0, 0, 0]);
+
+            return {
+                'country': d.country,
+                'gold': filteredAggregates[0],
+                'silver': filteredAggregates[1],
+                'bronze': filteredAggregates[2]
+            };
+        });
+    }
+
+}
 
 function filter() {
-    var rootElement, countryElement, genderElement, medalElement, yearElement;
+    var rootElement, genderElement, medalElement, yearElement, legendElement;
     var drilldown;
 
     var options = {
@@ -26,14 +117,88 @@ function filter() {
         selectedYears: [1926, 2006],
         yearOptions: [1926, 2006]
     };
+    function linspace(start, end, n) {
+        var out = [];
+        var delta = (end - start) / (n - 1);
 
+        var i = 0;
+        while(i < (n - 1)) {
+            out.push(start + (i * delta));
+            i++;
+        }
+
+        out.push(end);
+        return out;
+    }
     function init(parent) {
         rootElement = d3.select(parent)
             .append('div')
             .attr('class', 'col-sm');
 
-        var row = rootElement.append('div').attr('class', 'row');
 
+
+        legendElement = rootElement.append('div')
+            .attr('class', 'row')
+            .append('div')
+                .attr('class','col-sm text-center');
+
+         legendElement.append('h6')
+            .html('Winter Olympic Medals Won by Country');
+
+        var legendWidth = 500,
+            legendHeight = 75;
+         var legendSvg = legendElement.append('svg')
+                .attr('width',legendWidth)
+                .attr('height',legendHeight)
+                .append('g');
+
+        var gradient = legendSvg.append('defs')
+            .append('linearGradient')
+            .attr('id', 'gradient')
+            .attr('x1', '0%')
+            .attr('y1', '0%')
+            .attr('x2', '100%')
+            .attr('y2', '0%')
+            .attr('spreadMethod', 'pad');
+
+        var pct = linspace(0, 100, 6).map(function(d) {
+            return Math.round(d) + '%';
+        });
+
+        var colourPct = d3.zip(pct, colorWheel);
+
+        colourPct.forEach(function(d) {
+            gradient.append('stop')
+                .attr('offset', d[0])
+                .attr('stop-color', d[1])
+                .attr('stop-opacity', 1);
+        });
+
+        legendSvg.append('g')
+            .attr('transform','translate(50,10)')
+            .append('rect')
+                .attr('x1', 0)
+                .attr('y1', 0)
+                .attr('width', 400)
+                .attr('height', 10)
+                .style('fill', 'url(#gradient)');
+
+        // create a scale and axis for the legend
+        var legendScale = d3.scaleLinear()
+            .domain([0, max])
+            .range([0, 400]);
+
+        var legendAxis = d3.axisBottom()
+            .scale(legendScale)
+            .tickValues([0,20,40,60,80,96])
+            .tickFormat(d3.format("d"));
+
+        legendSvg.append("g")
+            .attr("class", "legend axis")
+            .attr("transform", "translate(50,20)")
+            .call(legendAxis);
+
+        var row = rootElement.append('div').attr('class', 'row');
         genderElement = row.append('div')
             .attr('class', 'col-sm text-center')
             .append('div')
@@ -104,6 +269,8 @@ function filter() {
                 ? 'btn btn-secondary active'
                 : 'btn btn-secondary';
         });
+
+
     }
 
     function refresh() {
@@ -371,7 +538,6 @@ function drilldown() {
     }
 
     function render() {
-        var data = dataTransform();
 
         countryElement.selectAll('rect').remove();
         countryElement.selectAll('rect')
@@ -407,93 +573,55 @@ function drilldown() {
                 _filter.deselectCountry(d);
             });
 
-        var max =  d3.max(data,
-            function(d) {
-                return d.gold+d.silver+d.bronze;
-    });
-        y.domain([
-            0,
-           max
-        ]);
 
-        stackedBarElement.selectAll(".layer").remove();
 
-        var layers = d3.stack().keys(['bronze','silver','gold'])(data);
+        //stackedBarElement.selectAll(".layer").remove();
+
+        var data = dataAggregateTransform(currentData,_filter);
+
+        var layers = d3.stack()
+            .keys(['bronze','silver','gold'])
+            (data);
 
         var layer = stackedBarElement.selectAll(".layer")
-            .data(layers)
-            .enter().append("g")
+            .data(layers);
+
+        var newLayers = layer.enter().append("g")
             .attr("class", "layer")
             .attr("transform", "translate(0,50)")
             .style("fill", function(d, i) { return medalColorScale(i); });
 
-        layer.selectAll("rect")
-            .data(function(d) { return d; })
-            .enter().append("rect")
-            .attr("x", function(d,i) { return (i*50)+5; })
+        layer.exit().remove();
+
+        var block = layer.selectAll("rect")
+            .data(function(d) { return d; });
+
+        block.transition()
             .attr("y", function(d) { return y(d[1]); })
             .attr('style','stroke:'+colorWheel[1])
             .attr("height", function(d) { return y(d[0]) - y(d[1]); })
+
+        block.enter().append("rect")
+            .attr("x", function(d,i) { return (i*50)+5; })
+            .attr("y", function(d) { return y(d[1]); })
+            .attr('style','stroke:'+colorWheel[1])
+            .attr("height", function(d) {
+                var y1 = y(d[0]);
+                var y2 = y(d[1]);
+
+                return y1 - y2;
+            })
             .attr("width", 40);
+
+        block.exit().remove()
     }
 
-    function dataTransform() {
-        if(!currentData){
-            return [];
-        }
 
-        return _.map(_filter.selectedCountries(), function(countryName){
-            var countryData = _.filter(currentData,
-                function(d) {
-                    return d.country === countryName;
-                });
-
-            var filteredAggregates = _.map(countryData,function(d){
-                var eligleYears = _.filter(d.medalCounts, function(m){
-                    return m.year >= _filter.selectedYears()[0] & m.year <= _filter.selectedYears()[1];
-                });
-
-                var genderAggregates = _.map(eligleYears, function(e){
-                    var results = [];
-                    if(_filter.selectedGenders().indexOf('Male') > -1){
-                        results.push(e.men);
-                    }
-                    if(_filter.selectedGenders().indexOf('Female') > -1){
-                        results.push(e.women);
-                    }
-
-                    return _.reduce(results, function(agg, x){
-                        return [
-                            agg[0] + x[0],
-                            agg[1] + x[1],
-                            agg[2] + x[2]
-                        ];
-                    },[0,0,0])
-                });
-
-                return _.reduce(genderAggregates, function(agg, x){
-                        return [
-                            agg[0] + x[0],
-                            agg[1] + x[1],
-                            agg[2] + x[2]
-                        ];
-                    },[0,0,0]);
-
-            });
-
-            return {
-                'country':countryName,
-                'gold': filteredAggregates[0][0],
-                'silver': filteredAggregates[0][1],
-                'bronze': filteredAggregates[0][2]
-            };
-        });
-
-    }
 
     function _drilldown(selection) {
         selection.each(function (data, i) {
             currentData = data.medalCounts;
+            y.domain([0,max]);
             if (!rootElement) {
                 init(this);
             }
@@ -520,12 +648,22 @@ function viz() {
     var width = 960,
         height = 500;
     var rootElement, leftColElement, rightColElement;
-    var medalCountColor = d3.scaleLinear()
-        .domain([0, 350])
-        .range(["#f7f7f7", "#252525"]);
+
+    function setDomain(data){
+        var transformed = dataAggregateTransform(data)
+        max =  d3.max(transformed,
+            function(d) {
+                return d.gold+d.silver+d.bronze;
+            });
+        medalCountColor.domain([
+            0,
+            max
+        ]);
+    }
 
     function _viz(selection) {
         selection.each(function (data, i) {
+            setDomain(data.medalCounts);
             rootElement = d3.select(this)
                 .append('div')
                 .attr('class', 'container');
