@@ -389,14 +389,12 @@ function filter() {
 
 function map() {
     var rootElement, svgElement, countryGroupElement;
-    var currentData, filter;
+    var currentData, _filter;
 
     var width = 500,
         height = 500,
         projection,
-        colorScale = d3.scaleLinear()
-            .domain([0, 300])
-            .range([colorWheel[0], colorWheel[6]]);
+        colorScale = medalCountColor;
 
 
     function init(parent) {
@@ -433,8 +431,11 @@ function map() {
             .enter().append("path")
             .attr("d", geoPath)
             .style("fill", function (d) {
-                var countryStats = _.find(currentData.medalCounts, {'country': d.properties.name});
-                var medalCount = countryStats ? countryStats['count'] : 0
+
+                var transformed = dataAggregateTransform(currentData.medalCounts,_filter);
+
+                var countryStats = _.find(transformed, {'country': d.properties.name});
+                var medalCount = countryStats ? countryStats['gold'] + countryStats['silver'] + countryStats['bronze'] : 0
 
                 return colorScale(medalCount);
             })
@@ -452,8 +453,8 @@ function map() {
                     .style("stroke-width", 0.3);
             })
             .on('click', function (d) {
-                if (filter) {
-                    filter.selectCountry(d.properties.name);
+                if (_filter) {
+                    _filter.selectCountry(d.properties.name);
                 }
             });
 
@@ -494,7 +495,7 @@ function map() {
     }
 
     _map.setFilter = function (value) {
-        filter = value;
+        _filter = value;
         return _map;
     }
     _map.colorScale = function (value) {
