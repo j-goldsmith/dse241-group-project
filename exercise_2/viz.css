@@ -1,3 +1,6 @@
+body{
+    font:14px 'Open Sans', sans-serif !important;
+}
 .map{
     height:500px;
     width:570px;
@@ -8,34 +11,6 @@
     width:100%;
 }
 
-.d3-tip {
-    line-height: 1;
-    padding: 6px;
-    background: rgba(0, 0, 0, 0.8);
-    color: #fff;
-    border-radius: 4px;
-    font-size: 12px;
-}
-
-/* Creates a small triangle extender for the tooltip */
-.d3-tip:after {
-    box-sizing: border-box;
-    display: inline;
-    font-size: 10px;
-    width: 100%;
-    line-height: 1;
-    color: rgba(0, 0, 0, 0.8);
-    content: "\25BC";
-    position: absolute;
-    text-align: center;
-}
-
-/* Style northward tooltips specifically */
-.d3-tip.n:after {
-    margin: -2px 0 0 0;
-    top: 100%;
-    left: 0;
-}
 /*************/
 
 .selected-country{
@@ -44,13 +19,12 @@
 
 .slider-holder{
 
-    margin-left: 90px;
 }
 
 /* slider ------------------------------ */
 
 .ticks {
-    font: 14px sans-serif;
+    font-size: 14px;
 }
 
 .track,
@@ -71,19 +45,35 @@
 }
 
 .sel-range{
-    stroke: #9CCC65;
+    stroke: #737373;
     stroke-width: 8px;
 }
 
 .handle {
-    fill: #E0F7FA;
+    fill: #525252;
     stroke: #000;
     stroke-opacity: 0.5;
     stroke-width: 1.25px;
 }
 .handle:hover{
-    fill: #B2EBF2;
+    fill: #969696;
 }
 .handle.active {
-    fill: #4DD0E1;
+    fill: #969696;
+}
+
+.legend text{
+    fill:#bdbdbd;
+    font-weight:bold;
+    font-size:14px;
+}
+
+.filter-button.active{
+    background-color: #525252 !important;
+}
+
+.filter-button{
+    background-color:#737373 !important;
+    font-weight: bold !important;
+    color:#bdbdbd !important;
 }

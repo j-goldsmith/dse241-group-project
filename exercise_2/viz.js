@@ -1,17 +1,17 @@
 'use strict';
 
 var colorWheel = [
-    '#f7f7f7',
+  //  '#f7f7f7',
     '#d9d9d9',
     '#bdbdbd',
     '#969696',
     '#737373',
-    '#525252'
-    //'#252525'
+    '#525252',
+    '#252525'
 ];
 var medalColors = ["#a17419",'#b7b7b7',"#d5a500"];
 var medalCountColor = d3.scaleLinear()
-    .range(["#f7f7f7", "#525252"]);
+    .range(["#d9d9d9", "#252525"]);
 var max;
 
 function dataAggregateTransform(data, _filter, selectedOnly) {
@@ -151,7 +151,7 @@ function filter() {
              .attr('id','year-output');
 
         var legendWidth = 500,
-            legendHeight = 75;
+            legendHeight = 45;
          var legendSvg = legendElement.append('svg')
                 .attr('width',legendWidth)
                 .attr('height',legendHeight)
@@ -166,7 +166,7 @@ function filter() {
             .attr('y2', '0%')
             .attr('spreadMethod', 'pad');
 
-        var pct = linspace(0, 100, 6).map(function(d) {
+        var pct = linspace(1, 100, 6).map(function(d) {
             return Math.round(d) + '%';
         });
 
@@ -195,16 +195,36 @@ function filter() {
 
         var legendAxis = d3.axisBottom()
             .scale(legendScale)
-            .tickValues([0,20,40,60,80,96])
+            .tickValues([1,60,120,180,240])
+            .tickSize(0)
+            .tickPadding(7)
             .tickFormat(d3.format("d"));
 
-        legendSvg.append("g")
+        var axisG = legendSvg.append("g")
             .attr("class", "legend axis")
             .attr("transform", "translate(50,20)")
             .call(legendAxis);
 
-        var row = rootElement.append('div').attr('class', 'row');
-        genderElement = row.append('div')
+        axisG.select(".domain").remove();
+
+        yearElement = rootElement
+            .append('div')
+            .attr('class', 'row mt-2')
+            .append('div')
+            .attr('class', 'col-sm text-center')
+            .append('div').attr('class','slider-holder');
+        setupSlider(
+            options.yearOptions[0],
+            options.yearOptions[1],
+            function(lo,hi){
+                options.selectedYears[0] = lo;
+                options.selectedYears[1] = hi;
+                refresh();
+            },
+            function(x){return colorWheel[2];})
+
+        var row = rootElement.append('div').attr('class', 'row mt-4');
+   /*     genderElement = row.append('div')
             .attr('class', 'col-sm text-center')
             .append('div')
                 .attr('class', 'btn-group btn-group-toggle')
@@ -222,7 +242,7 @@ function filter() {
         enteredGenderLabel.append('span').text(function (d) {
             return d;
         })
-
+*/
 
         medalElement = row.append('div')
             .attr('class', 'col-sm text-center')
@@ -242,21 +262,7 @@ function filter() {
             return d;
         });
 
-        yearElement = rootElement
-            .append('div')
-            .attr('class', 'row')
-            .append('div')
-            .attr('class', 'col-sm')
-            .append('div').attr('class','slider-holder');
-        setupSlider(
-            options.yearOptions[0],
-            options.yearOptions[1],
-            function(lo,hi){
-                options.selectedYears[0] = lo;
-                options.selectedYears[1] = hi;
-                refresh();
-            },
-            function(x){return colorWheel[2];})
+
     }
 
     function render() {
@@ -266,16 +272,16 @@ function filter() {
 
         legendElement.selectAll('#year-output').text(options.selectedYears[0]+" to "+options.selectedYears[1]);
 
-        genderElement.selectAll('label').attr('class', function (d) {
+       /* genderElement.selectAll('label').attr('class', function (d) {
             return (options.selectedGenders.indexOf(d) > -1)
                 ? 'btn btn-secondary active'
                 : 'btn btn-secondary';
         });
-
+*/
         medalElement.selectAll('label').attr('class', function (d) {
             return (options.selectedMedalTypes.indexOf(d) > -1)
-                ? 'btn btn-secondary active'
-                : 'btn btn-secondary';
+                ? 'filter-button btn btn-secondary  active'
+                : 'filter-button btn btn-secondary';
         });
 
 
@@ -449,7 +455,7 @@ function map() {
             var countryStats = _.find(transformed, {'country': d.properties.name});
             var medalCount = countryStats ? countryStats['gold'] + countryStats['silver'] + countryStats['bronze'] : 0
 
-            return colorScale(medalCount);
+            return medalCount > 0 ? colorScale(medalCount):'#f7f7f7';
         });
 
 
@@ -547,7 +553,6 @@ function drilldown() {
         height = 800;
     var y = d3.scaleLinear()
         .rangeRound([500, 50]);
-
 
     var medalColorScale = d3.scaleOrdinal()
         .range(medalColors)
@@ -680,8 +685,6 @@ function drilldown() {
 
 
     }
-
-
 
     function _drilldown(selection) {
         selection.each(function (data, i) {
