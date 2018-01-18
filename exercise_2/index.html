@@ -20,7 +20,7 @@
     <script type="application/javascript">
         d3.queue()
             .defer(d3.json, "https://mas-dse.github.io/DSE241/2018/data/exercise2-olympics.json")
-            .defer(d3.json, "https://raw.githubusercontent.com/jdamiani27/Data-Visualization-and-D3/master/lesson4/world_countries.json")
+            .defer(d3.json, "world_countries.json")
             .defer(d3.json, "data.json")
             .await(init);
 

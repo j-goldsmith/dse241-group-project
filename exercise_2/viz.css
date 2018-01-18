@@ -77,3 +77,15 @@ body{
     font-weight: bold !important;
     color:#bdbdbd !important;
 }
+
+div.tooltip {
+    position: absolute;
+    text-align: left;
+    width: auto;
+
+    padding: 10px;
+
+    background: #bdbdbd;
+    border: 1px solid #525252;
+    pointer-events: none;
+}

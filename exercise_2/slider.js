@@ -9,11 +9,11 @@ function setupSlider(v1, v2, callback, color){
             .attr('height', 50);
 
     var x = d3.scaleLinear()
-        .domain([1926, 2006])
+        .domain([1924, 2006])
         .range([0, width])
         .clamp(true);
 
-    var xMin=x(1926),
+    var xMin=x(1924),
         xMax=x(2006)
 
     var slider = svg.append("g")

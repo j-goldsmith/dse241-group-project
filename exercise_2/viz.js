@@ -9,10 +9,21 @@ var colorWheel = [
     '#525252',
     '#252525'
 ];
+
+var activeColorWheel =[
+    '#eff3ff',
+    '#c6dbef',
+    '#9ecae1',
+    '#6baed6',
+    '#4292c6',
+    '#2171b5',
+    '#084594'
+]
 var medalColors = ["#a17419",'#b7b7b7',"#d5a500"];
 var medalCountColor = d3.scaleLinear()
     .range(["#d9d9d9", "#252525"]);
 var max;
+
 
 function dataAggregateTransform(data, _filter, selectedOnly) {
     if(!data){
@@ -61,7 +72,7 @@ function dataAggregateTransform(data, _filter, selectedOnly) {
 
             });
 
-            var result = {'country': countryName};
+            var result = {'country': countryName, 'historicRegions':countryData.length > 0 ? countryData[0].historicRegions:[]};
 
             result['gold'] = filteredAggregates.length == 0  || _filter.selectededMedalTypes().indexOf('Gold') == -1 ? 0:filteredAggregates[0][0];
             result['silver'] = filteredAggregates.length == 0  || _filter.selectededMedalTypes().indexOf('Silver') == -1 ? 0:filteredAggregates[0][1];
@@ -97,7 +108,8 @@ function dataAggregateTransform(data, _filter, selectedOnly) {
                 'country': d.country,
                 'gold': filteredAggregates[0],
                 'silver': filteredAggregates[1],
-                'bronze': filteredAggregates[2]
+                'bronze': filteredAggregates[2],
+                'historicRegions':d.historicRegions
             };
         });
     }
@@ -410,14 +422,46 @@ function filter() {
 }
 
 function map() {
-    var rootElement, svgElement, countryGroupElement;
-    var currentData, _filter;
+    var rootElement, svgElement, countryGroupElement,tooltipElement;
+    var currentData,transformedData, _filter;
 
     var width = 500,
         height = 500,
         projection,
-        colorScale = medalCountColor;
+        colorScale = medalCountColor,
+        activeColorScale = d3.scaleLinear()
+            .range([activeColorWheel[1], activeColorWheel[6]])
+            .domain([1,max]);
 
+
+    function aggTrans(){
+        if(!currentData || !_filter){
+            return;
+        }
+
+        var t = dataAggregateTransform(currentData.medalCounts,_filter,false);
+        return _.map(currentData.atlas.features, function(d){
+            var country = d.properties.name;
+            var stats = _.filter(t, function(x){ return x.country == country});
+            if(stats.length > 0){
+                var related = stats[0]['historicRegions']
+                    ? _.filter(t, function(x){
+                        return stats[0]['historicRegions'].indexOf(x.country) > -1;})
+                    : [];
+
+                stats = stats.concat(related);
+            }
+
+            d['medals'] = {
+                'total': _.reduce(stats,function(a,x){
+                    return a + x.gold + x.silver + x.bronze;
+                },0),
+                'stats': stats.length > 0 ? stats : [{'country':country,'gold':0,'bronze':0,'silver':0}]
+            };
+            return d;
+        })
+
+    }
 
     function init(parent) {
         rootElement = d3.select(parent)
@@ -438,6 +482,10 @@ function map() {
                     countryGroupElement.attr("transform", d3.event.transform);
                 })
         );
+
+        tooltipElement = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
     }
 
     function render() {
@@ -446,15 +494,13 @@ function map() {
             .translate([width / 2, height / 2]);
         var geoPath = d3.geoPath().projection(projection);
 
-        var transformed = dataAggregateTransform(currentData.medalCounts,_filter);
+        transformedData = aggTrans(currentData.medalCounts,_filter);
         var countries = countryGroupElement
             .selectAll("path")
-            .data(currentData.atlas.features);
+            .data(transformedData);
 
         countries.style("fill", function (d) {
-            var countryStats = _.find(transformed, {'country': d.properties.name});
-            var medalCount = countryStats ? countryStats['gold'] + countryStats['silver'] + countryStats['bronze'] : 0
-
+            var medalCount = d.medals.total;
             return medalCount > 0 ? colorScale(medalCount):'#f7f7f7';
         });
 
@@ -462,28 +508,59 @@ function map() {
         countries.enter().append("path")
             .attr("d", geoPath)
             .style("fill", function (d) {
-
-                var countryStats = _.find(transformed, {'country': d.properties.name});
-                var medalCount = countryStats ? countryStats['gold'] + countryStats['silver'] + countryStats['bronze'] : 0
-
-                return colorScale(medalCount);
+                var medalCount =d.medals.total;
+                return medalCount > 0 ? colorScale(medalCount):'#f7f7f7';
             })
             .style('stroke', '#f7f7f7')
             .style('stroke-width', 0.3)
             .on('mouseover', function (d) {
+
+                var html = "";
+                d.medals.stats.forEach(function(x){
+                    html +=
+                        "<strong>Country: </strong><span class='details'>" + x.country + "</span><br>" +
+                        "<i>Gold: </i><span class='details'>" + x.gold +"</span><br>"+
+                        "<i>Silver: </i><span class='details'>" + x.silver +"</span><br>" +
+                        "<i>Bronze: </i><span class='details'>" + x.bronze +"</span><br>"
+                });
+
+                tooltipElement.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                tooltipElement.html(html)
+                    .style("left", (d3.event.pageX + 40 ) + "px")
+                    .style("top", (d3.event.pageY - 28) + "px");
+
                 d3.select(this)
-                    .style("opacity", .8)
-                    .style("stroke", "#252525");
+                    //.style("opacity", .8)
+                    //.moveToFront()
+                   // .style("stroke", "#252525")
+                    .style("fill", function (d) {
+                        var medalCount = d.medals.total;
+                        return medalCount > 0 ? activeColorScale(medalCount):activeColorWheel[0];
+                    });
             })
             .on('mouseout', function (d) {
+                tooltipElement.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+
                 d3.select(this)
-                    .style("opacity", 1)
-                    .style("stroke", "#f7f7f7")
-                    .style("stroke-width", 0.3);
+                   // .style("opacity", 1)
+                    //.style("stroke", "#f7f7f7")
+                   // .style("stroke-width", 0.3)
+                    .style("fill", function (d) {
+                        var medalCount = d.medals.total;
+                        return medalCount > 0 ? colorScale(medalCount):'#f7f7f7';
+                    });
             })
             .on('click', function (d) {
+                d3.select(this).classed("active", !d3.select(this).classed("active"))
                 if (_filter) {
-                    _filter.selectCountry(d.properties.name);
+                    d.medals.stats.forEach(function(c){
+                        _filter.selectCountry(c.country);
+                    });
+
                 }
             });
 
@@ -521,7 +598,7 @@ function map() {
                 init(this);
             }
             currentData = data;
-            render();
+            //render();
         });
     }
 
@@ -535,7 +612,7 @@ function map() {
         return _map;
     }
     _map.refresh = function (filterInstance) {
-        // _filter = filterInstance;
+        //_filter = filterInstance;
         if (rootElement) {
             render();
         }
