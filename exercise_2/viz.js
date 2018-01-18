@@ -14,13 +14,15 @@ var medalCountColor = d3.scaleLinear()
     .range(["#f7f7f7", "#525252"]);
 var max;
 
-function dataAggregateTransform(data, _filter) {
+function dataAggregateTransform(data, _filter, selectedOnly) {
     if(!data){
         return [];
     }
 
     if(_filter) {
-        return _.map(_filter.selectedCountries(), function (countryName) {
+        var s = _filter.selectedCountries();
+        var c = selectedOnly ? s : _.uniq(_.pluck(data,'country'));
+        return _.map(c, function (countryName) {
             var countryData = _.filter(data,
                 function (d) {
                     return d.country === countryName;
@@ -59,12 +61,13 @@ function dataAggregateTransform(data, _filter) {
 
             });
 
-            return {
-                'country': countryName,
-                'gold': filteredAggregates.length > 0 ? filteredAggregates[0][0]:0,
-                'silver': filteredAggregates.length > 0 ? filteredAggregates[0][1]:0,
-                'bronze': filteredAggregates.length > 0 ? filteredAggregates[0][2]:0
-            };
+            var result = {'country': countryName};
+
+            result['gold'] = filteredAggregates.length == 0  || _filter.selectededMedalTypes().indexOf('Gold') == -1 ? 0:filteredAggregates[0][0];
+            result['silver'] = filteredAggregates.length == 0  || _filter.selectededMedalTypes().indexOf('Silver') == -1 ? 0:filteredAggregates[0][1];
+            result['bronze'] = filteredAggregates.length == 0  || _filter.selectededMedalTypes().indexOf('Bronze') == -1 ? 0:filteredAggregates[0][2];
+
+            return result;
         });
     }
     else {
@@ -103,7 +106,7 @@ function dataAggregateTransform(data, _filter) {
 
 function filter() {
     var rootElement, genderElement, medalElement, yearElement, legendElement;
-    var drilldown;
+    var drilldown, map;
 
     var options = {
         selectedCountries: [],
@@ -114,8 +117,8 @@ function filter() {
         selectedMedalTypes: ['Gold', 'Silver', 'Bronze'],
         medalOptions: ['Gold', 'Silver', 'Bronze'],
 
-        selectedYears: [1926, 2006],
-        yearOptions: [1926, 2006]
+        selectedYears: [1924, 2006],
+        yearOptions: [1924, 2006]
     };
     function linspace(start, end, n) {
         var out = [];
@@ -143,7 +146,9 @@ function filter() {
                 .attr('class','col-sm text-center');
 
          legendElement.append('h6')
-            .html('Winter Olympic Medals Won by Country');
+            .html('Winter Olympic Medals by Country');
+         legendElement.append('h7')
+             .attr('id','year-output');
 
         var legendWidth = 500,
             legendHeight = 75;
@@ -258,6 +263,8 @@ function filter() {
             return;
         }
 
+        legendElement.selectAll('#year-output').text(options.selectedYears[0]+" to "+options.selectedYears[1]);
+
         genderElement.selectAll('label').attr('class', function (d) {
             return (options.selectedGenders.indexOf(d) > -1)
                 ? 'btn btn-secondary active'
@@ -277,6 +284,9 @@ function filter() {
         render();
         if (drilldown) {
             drilldown.refresh(this);
+        }
+        if (map) {
+            map.refresh(this);
         }
     }
 
@@ -310,7 +320,7 @@ function filter() {
     _filter.selectededMedalTypes = function (value) {
         if (!arguments.length) return options.selectedMedalTypes;
         options.selectedMedalTypes = value;
-        refresh()
+        refresh();
         return _filter;
     };
 
@@ -383,7 +393,12 @@ function filter() {
 
         return _filter;
     };
+    _filter.setMap = function (value) {
+        map = value;
+        map.refresh(_filter);
 
+        return _filter;
+    };
     return _filter;
 }
 
@@ -424,15 +439,22 @@ function map() {
             .translate([width / 2, height / 2]);
         var geoPath = d3.geoPath().projection(projection);
 
-        countryGroupElement
-            .attr("class", "countries")
+        var transformed = dataAggregateTransform(currentData.medalCounts,_filter);
+        var countries = countryGroupElement
             .selectAll("path")
-            .data(currentData.atlas.features)
-            .enter().append("path")
+            .data(currentData.atlas.features);
+
+        countries.style("fill", function (d) {
+            var countryStats = _.find(transformed, {'country': d.properties.name});
+            var medalCount = countryStats ? countryStats['gold'] + countryStats['silver'] + countryStats['bronze'] : 0
+
+            return colorScale(medalCount);
+        });
+
+
+        countries.enter().append("path")
             .attr("d", geoPath)
             .style("fill", function (d) {
-
-                var transformed = dataAggregateTransform(currentData.medalCounts,_filter);
 
                 var countryStats = _.find(transformed, {'country': d.properties.name});
                 var medalCount = countryStats ? countryStats['gold'] + countryStats['silver'] + countryStats['bronze'] : 0
@@ -457,6 +479,8 @@ function map() {
                     _filter.selectCountry(d.properties.name);
                 }
             });
+
+        countries.exit().remove();
 
         /* .on("click", function(d){
          var bounds = path.bounds(d),
@@ -503,18 +527,25 @@ function map() {
         colorScale = value;
         return _map;
     }
+    _map.refresh = function (filterInstance) {
+        // _filter = filterInstance;
+        if (rootElement) {
+            render();
+        }
 
+        return _map;
+    };
     return _map;
 }
 
 function drilldown() {
-    var rootElement, countryElement, stackedBarElement;
+    var rootElement, countryElement, stackedBarElement, legendElement;
     var currentData;
     var _filter;
     var width = 500,
         height = 800;
     var y = d3.scaleLinear()
-        .rangeRound([450, 0]);
+        .rangeRound([500, 50]);
 
 
     var medalColorScale = d3.scaleOrdinal()
@@ -526,7 +557,9 @@ function drilldown() {
             .append('svg')
             .attr('width', width)
             .attr('height', height);
-
+        legendElement = rootElement.append('g')
+            .attr('width', 300)
+            .attr('height',450);
         countryElement = rootElement.append('g')
             .attr('width', 300)
             .attr('height', 350)
@@ -536,9 +569,35 @@ function drilldown() {
             .attr('width', 300)
             .attr('height', 450);
 
+
+
     }
 
     function render() {
+        var data = _.range(max-1,-1,-20);
+
+
+        legendElement.selectAll('line')
+            .data(data)
+            .enter().append('line')
+            .attr('y1',function(d){return y(d);})
+            .attr('x1', 0)
+            .attr('y2',function(d){return y(d);})
+            .attr('x1', 500)
+            .style('stroke','#d9d9d9')
+            .style('stroke-width','1')
+
+        legendElement.selectAll('text')
+            .data(data)
+            .enter()
+            .append('text')
+            .text(function(d){
+                return d;})
+            .attr('x',470)
+            .attr('y',function(d){return y(d) + 15;})
+            .attr('height',20)
+            .attr('width',40)
+            .style('fill','#bdbdbd');
 
         countryElement.selectAll('rect').remove();
         countryElement.selectAll('rect')
@@ -578,7 +637,7 @@ function drilldown() {
 
         //stackedBarElement.selectAll(".layer").remove();
 
-        var data = dataAggregateTransform(currentData,_filter);
+        var data = dataAggregateTransform(currentData,_filter,true);
 
         var layers = d3.stack()
             .keys(['bronze','silver','gold'])
@@ -589,7 +648,7 @@ function drilldown() {
 
         var newLayers = layer.enter().append("g")
             .attr("class", "layer")
-            .attr("transform", "translate(0,50)")
+            .attr("transform", "translate(0,0)")
             .style("fill", function(d, i) { return medalColorScale(i); });
 
         layer.exit().remove();
@@ -615,6 +674,10 @@ function drilldown() {
             .attr("width", 40);
 
         block.exit().remove()
+
+
+
+
     }
 
 
@@ -692,6 +755,7 @@ function viz() {
             drilldownInstance.setFilter(filterInstance);
 
             filterInstance.setDrilldown(drilldownInstance);
+            filterInstance.setMap(mapInstance);
         });
     }
 
