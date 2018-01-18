@@ -252,8 +252,9 @@ function filter() {
             options.yearOptions[0],
             options.yearOptions[1],
             function(lo,hi){
-                options.yearOptions[0] = lo;
-                options.yearOptions[1] = hi;
+                options.selectedYears[0] = lo;
+                options.selectedYears[1] = hi;
+                refresh();
             },
             function(x){return colorWheel[2];})
     }
