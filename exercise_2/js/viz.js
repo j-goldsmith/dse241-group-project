@@ -205,7 +205,7 @@ function filter() {
 
         var legendAxis = d3.axisBottom()
             .scale(legendScale)
-            .tickValues([1,60,120,180,240])
+            .tickValues([1,70,140,210,280])
             .tickSize(0)
             .tickPadding(7)
             .tickFormat(d3.format("d"));
@@ -655,7 +655,7 @@ function drilldown() {
     }
 
     function render() {
-        var data = _.range(max-1,-1,-20);
+        var data = _.range(max,-1,-20);
 
 
         legendElement.selectAll('line')
