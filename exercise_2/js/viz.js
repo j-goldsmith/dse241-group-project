@@ -9,7 +9,6 @@ var colorWheel = [
     '#525252',
     '#252525'
 ];
-
 var activeColorWheel =[
     '#eff3ff',
     '#c6dbef',
@@ -18,7 +17,7 @@ var activeColorWheel =[
     '#4292c6',
     '#2171b5',
     '#084594'
-]
+];
 var medalColors = ["#a17419",'#b7b7b7',"#d5a500"];
 var medalCountColor = d3.scaleLinear()
     .range(["#d9d9d9", "#252525"]);
@@ -87,7 +86,6 @@ function dataAggregateTransform(data, _filter, selectedOnly) {
             var men = _.map(d.medalCounts, function(m){
                 return m.men
             });
-
             var women = _.map(d.medalCounts, function(m){
                 return m.women
             });
@@ -518,10 +516,10 @@ function map() {
                 var html = "";
                 d.medals.stats.forEach(function(x){
                     html +=
-                        "<strong>Country: </strong><span class='details'>" + x.country + "</span><br>" +
+                        "<div class='mb-2'><strong>" + x.country + "</strong><br>" +
                         "<i>Gold: </i><span class='details'>" + x.gold +"</span><br>"+
                         "<i>Silver: </i><span class='details'>" + x.silver +"</span><br>" +
-                        "<i>Bronze: </i><span class='details'>" + x.bronze +"</span><br>"
+                        "<i>Bronze: </i><span class='details'>" + x.bronze +"</span></div>"
                 });
 
                 tooltipElement.transition()
