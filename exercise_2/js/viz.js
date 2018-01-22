@@ -1,28 +1,52 @@
 'use strict';
+var colorOptions = {
+    colorPalette: [
+        '#f7f7f7',
+        '#d9d9d9',
+        '#bdbdbd',
+        '#969696',
+        '#737373',
+        '#525252',
+        '#252525'
+    ],
+    hoverColorPalette:[
+        '#eff3ff',
+        '#c6dbef',
+        '#9ecae1',
+        '#6baed6',
+        '#4292c6',
+        '#2171b5',
+        '#084594'
+    ],
+    activeColorPalette:[
+        '#eff3ff',
+        '#c6dbef',
+        '#9ecae1',
+        '#6baed6',
+        '#4292c6',
+        '#2171b5',
+        '#084594'
+    ],
+    medalColors: ["#a17419",'#b7b7b7',"#d5a500"] //bronze, silver, gold
+};
+var colorScales = {
+    medalScale:d3.scaleOrdinal()
+        .range(colorOptions.medalColors),
+    medalCountScale:d3.scaleLinear()
+        .range([
+            colorOptions.colorPalette[1],
+            colorOptions.colorPalette[6]]),
+    hoverMedalCountScale:d3.scaleLinear()
+        .range([
+            colorOptions.hoverColorPalette[1],
+            colorOptions.hoverColorPalette[6]]),
+    activeMedalCountScale: d3.scaleLinear()
+        .range([
+            colorOptions.activeColorPalette[1],
+            colorOptions.activeColorPalette[6]])
+};
 
-var colorWheel = [
-  //  '#f7f7f7',
-    '#d9d9d9',
-    '#bdbdbd',
-    '#969696',
-    '#737373',
-    '#525252',
-    '#252525'
-];
-var activeColorWheel =[
-    '#eff3ff',
-    '#c6dbef',
-    '#9ecae1',
-    '#6baed6',
-    '#4292c6',
-    '#2171b5',
-    '#084594'
-];
-var medalColors = ["#a17419",'#b7b7b7',"#d5a500"];
-var medalCountColor = d3.scaleLinear()
-    .range(["#d9d9d9", "#252525"]);
 var max;
-
 
 function dataAggregateTransform(data, _filter, selectedOnly) {
     if(!data){
@@ -180,7 +204,7 @@ function filter() {
             return Math.round(d) + '%';
         });
 
-        var colourPct = d3.zip(pct, colorWheel);
+        var colourPct = d3.zip(pct, colorOptions.colorPalette.slice(1));
 
         colourPct.forEach(function(d) {
             gradient.append('stop')
@@ -231,7 +255,7 @@ function filter() {
                 options.selectedYears[1] = hi;
                 refresh();
             },
-            function(x){return colorWheel[2];})
+            function(x){return colorOptions.colorPalette[3];})
 
         var row = rootElement.append('div').attr('class', 'row mt-4');
    /*     genderElement = row.append('div')
@@ -426,10 +450,8 @@ function map() {
     var width = 500,
         height = 500,
         projection,
-        colorScale = medalCountColor,
-        activeColorScale = d3.scaleLinear()
-            .range([activeColorWheel[1], activeColorWheel[6]])
-            .domain([1,max]);
+        colorScale = colorScales.medalCountScale,
+        activeColorScale = colorScales.activeMedalCountScale.domain([1,max]);
 
 
     function aggTrans(){
@@ -499,7 +521,7 @@ function map() {
 
         countries.style("fill", function (d) {
             var medalCount = d.medals.total;
-            return medalCount > 0 ? colorScale(medalCount):'#f7f7f7';
+            return medalCount > 0 ? colorScale(medalCount): colorOptions.colorPalette[0];
         });
 
 
@@ -507,9 +529,9 @@ function map() {
             .attr("d", geoPath)
             .style("fill", function (d) {
                 var medalCount =d.medals.total;
-                return medalCount > 0 ? colorScale(medalCount):'#f7f7f7';
+                return medalCount > 0 ? colorScale(medalCount): colorOptions.colorPalette[0];
             })
-            .style('stroke', '#f7f7f7')
+            .style('stroke',  colorOptions.colorPalette[0])
             .style('stroke-width', 0.3)
             .on('mouseover', function (d) {
 
@@ -535,7 +557,7 @@ function map() {
                    // .style("stroke", "#252525")
                     .style("fill", function (d) {
                         var medalCount = d.medals.total;
-                        return medalCount > 0 ? activeColorScale(medalCount):activeColorWheel[0];
+                        return medalCount > 0 ? activeColorScale(medalCount):colorOptions.activeColorPalette[0];
                     });
             })
             .on('mouseout', function (d) {
@@ -545,11 +567,11 @@ function map() {
 
                 d3.select(this)
                    // .style("opacity", 1)
-                    //.style("stroke", "#f7f7f7")
+                    //.style("stroke",  colorOptions.colorPalette[0])
                    // .style("stroke-width", 0.3)
                     .style("fill", function (d) {
                         var medalCount = d.medals.total;
-                        return medalCount > 0 ? colorScale(medalCount):'#f7f7f7';
+                        return medalCount > 0 ? colorScale(medalCount): colorOptions.colorPalette[0];
                     });
             })
             .on('click', function (d) {
@@ -629,8 +651,7 @@ function drilldown() {
     var y = d3.scaleLinear()
         .rangeRound([500, 50]);
 
-    var medalColorScale = d3.scaleOrdinal()
-        .range(medalColors)
+    var medalColorScale = colorScales.medalScale
         .domain(['bronze','silver','gold']);
 
     function init(parent) {
@@ -665,7 +686,7 @@ function drilldown() {
             .attr('x1', 0)
             .attr('y2',function(d){return y(d);})
             .attr('x1', 500)
-            .style('stroke','#d9d9d9')
+            .style('stroke', colorOptions.colorPalette[1])
             .style('stroke-width','1')
 
         legendElement.selectAll('text')
@@ -678,7 +699,7 @@ function drilldown() {
             .attr('y',function(d){return y(d) + 15;})
             .attr('height',20)
             .attr('width',40)
-            .style('fill','#bdbdbd');
+            .style('fill', colorOptions.colorPalette[2]);
 
         countryElement.selectAll('rect').remove();
         countryElement.selectAll('rect')
@@ -690,7 +711,7 @@ function drilldown() {
             .attr('x', 0)
             .attr('y', function (d, i) {
                 return (i * 50)+5;
-            }).attr('style', 'fill:white;stroke:' + colorWheel[1] + ';')
+            }).attr('style', 'fill:white;stroke:' + colorOptions.colorPalette[2] + ';')
             .on('click', function (d) {
                 _filter.deselectCountry(d);
             });
@@ -739,13 +760,13 @@ function drilldown() {
 
         block.transition()
             .attr("y", function(d) { return y(d[1]); })
-            .attr('style','stroke:'+colorWheel[1])
+            .attr('style','stroke:'+ colorOptions.colorPalette[2])
             .attr("height", function(d) { return y(d[0]) - y(d[1]); })
 
         block.enter().append("rect")
             .attr("x", function(d,i) { return (i*50)+5; })
             .attr("y", function(d) { return y(d[1]); })
-            .attr('style','stroke:'+colorWheel[1])
+            .attr('style','stroke:'+ colorOptions.colorPalette[2])
             .attr("height", function(d) {
                 var y1 = y(d[0]);
                 var y2 = y(d[1]);
@@ -798,7 +819,7 @@ function viz() {
             function(d) {
                 return d.gold+d.silver+d.bronze;
             });
-        medalCountColor.domain([
+        colorScales.medalCountScale.domain([
             0,
             max
         ]);
@@ -819,7 +840,7 @@ function viz() {
                 .selectedCountries(selectedCountries);
             var drilldownInstance = drilldown();
             var mapInstance = map()
-                .colorScale(medalCountColor);
+                .colorScale(colorScales.medalCountScale);
 
             leftColElement.append('div')
                 .attr('class', 'row')
