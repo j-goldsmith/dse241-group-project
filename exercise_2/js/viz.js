@@ -1,49 +1,49 @@
 'use strict';
-var colorOptions = (function() {
-    var bronzePalette=[
-        "#FFFAF5",
-        "#FFEAD9",
-        "#F1C8A7",
-        "#CB9366",
-        "#A3612B"
-    ],
-    silverPalette=[
-        "#DBDEE3",
-        "#A7B0C1",
-        "#7483A0",
-        "#4B5F87",
-        "#253D6D"
-    ],
+var colorOptions = (function () {
+    var bronzePalette = [
+            "#FFFAF5",
+            "#FFEAD9",
+            "#F1C8A7",
+            "#CB9366",
+            "#A3612B"
+        ],
+        silverPalette = [
+            "#DBDEE3",
+            "#A7B0C1",
+            "#7483A0",
+            "#4B5F87",
+            "#253D6D"
+        ],
 
-    goldPalette=[
-        "#FFFDF5",
-        "#FFF8D9",
-        "#F1E3A7",
-        "#CBB866",
-        "#A38D2B"
-    ],
-    medalColors=[
-        bronzePalette[2],
-        silverPalette[1],
-        goldPalette[2]
-    ]; //bronze, silver, gold
+        goldPalette = [
+            "#FFFDF5",
+            "#FFF8D9",
+            "#F1E3A7",
+            "#CBB866",
+            "#A38D2B"
+        ],
+        medalColors = [
+            bronzePalette[2],
+            silverPalette[1],
+            goldPalette[2]
+        ]; //bronze, silver, gold
 
     return {
-        bronzePalette:bronzePalette,
-        silverPalette:silverPalette,
-        goldPalette:goldPalette,
-        medalColors:medalColors
+        bronzePalette: bronzePalette,
+        silverPalette: silverPalette,
+        goldPalette: goldPalette,
+        medalColors: medalColors
     };
 })();
 
 var colorScales = {
-    medalScale:d3.scaleOrdinal()
+    medalScale: d3.scaleOrdinal()
         .range(colorOptions.medalColors),
-    medalCountScale:d3.scaleLinear()
+    medalCountScale: d3.scaleLinear()
         .range([
             colorOptions.silverPalette[1],
             colorOptions.silverPalette[4]]),
-    hoverMedalCountScale:d3.scaleLinear()
+    hoverMedalCountScale: d3.scaleLinear()
         .range([
             colorOptions.bronzePalette[1],
             colorOptions.bronzePalette[4]]),
@@ -56,13 +56,13 @@ var colorScales = {
 var max;
 
 function dataAggregateTransform(data, _filter, selectedOnly) {
-    if(!data){
+    if (!data) {
         return [];
     }
 
-    if(_filter) {
+    if (_filter) {
         var s = _filter.selectedCountries();
-        var c = selectedOnly ? s : _.uniq(_.pluck(data,'country'));
+        var c = selectedOnly ? s : _.uniq(_.pluck(data, 'country'));
         return _.map(c, function (countryName) {
             var countryData = _.filter(data,
                 function (d) {
@@ -102,11 +102,14 @@ function dataAggregateTransform(data, _filter, selectedOnly) {
 
             });
 
-            var result = {'country': countryName, 'historicRegions':countryData.length > 0 ? countryData[0].historicRegions:[]};
+            var result = {
+                'country': countryName,
+                'historicRegions': countryData.length > 0 ? countryData[0].historicRegions : []
+            };
 
-            result['gold'] = filteredAggregates.length == 0  || _filter.selectededMedalTypes().indexOf('Gold') == -1 ? 0:filteredAggregates[0][0];
-            result['silver'] = filteredAggregates.length == 0  || _filter.selectededMedalTypes().indexOf('Silver') == -1 ? 0:filteredAggregates[0][1];
-            result['bronze'] = filteredAggregates.length == 0  || _filter.selectededMedalTypes().indexOf('Bronze') == -1 ? 0:filteredAggregates[0][2];
+            result['gold'] = filteredAggregates.length == 0 || _filter.selectededMedalTypes().indexOf('Gold') == -1 ? 0 : filteredAggregates[0][0];
+            result['silver'] = filteredAggregates.length == 0 || _filter.selectededMedalTypes().indexOf('Silver') == -1 ? 0 : filteredAggregates[0][1];
+            result['bronze'] = filteredAggregates.length == 0 || _filter.selectededMedalTypes().indexOf('Bronze') == -1 ? 0 : filteredAggregates[0][2];
 
             return result;
         });
@@ -114,10 +117,10 @@ function dataAggregateTransform(data, _filter, selectedOnly) {
     else {
         return _.map(data, function (d) {
 
-            var men = _.map(d.medalCounts, function(m){
+            var men = _.map(d.medalCounts, function (m) {
                 return m.men
             });
-            var women = _.map(d.medalCounts, function(m){
+            var women = _.map(d.medalCounts, function (m) {
                 return m.women
             });
 
@@ -138,7 +141,7 @@ function dataAggregateTransform(data, _filter, selectedOnly) {
                 'gold': filteredAggregates[0],
                 'silver': filteredAggregates[1],
                 'bronze': filteredAggregates[2],
-                'historicRegions':d.historicRegions
+                'historicRegions': d.historicRegions
             };
         });
     }
@@ -161,12 +164,13 @@ function filter() {
         selectedYears: [1924, 2006],
         yearOptions: [1924, 2006]
     };
+
     function linspace(start, end, n) {
         var out = [];
         var delta = (end - start) / (n - 1);
 
         var i = 0;
-        while(i < (n - 1)) {
+        while (i < (n - 1)) {
             out.push(start + (i * delta));
             i++;
         }
@@ -174,29 +178,29 @@ function filter() {
         out.push(end);
         return out;
     }
+
     function init(parent) {
         rootElement = d3.select(parent)
             .append('div')
             .attr('class', 'col-sm');
 
 
-
         legendElement = rootElement.append('div')
             .attr('class', 'row')
             .append('div')
-                .attr('class','col-sm text-center');
+            .attr('class', 'col-sm text-center');
 
-         legendElement.append('h6')
+        legendElement.append('h6')
             .html('Winter Olympic Medals by Country');
-         legendElement.append('h7')
-             .attr('id','year-output');
+        legendElement.append('h7')
+            .attr('id', 'year-output');
 
         var legendWidth = 500,
             legendHeight = 45;
-         var legendSvg = legendElement.append('svg')
-                .attr('width',legendWidth)
-                .attr('height',legendHeight)
-                .append('g');
+        var legendSvg = legendElement.append('svg')
+            .attr('width', legendWidth)
+            .attr('height', legendHeight)
+            .append('g');
 
         var gradient = legendSvg.append('defs')
             .append('linearGradient')
@@ -207,13 +211,13 @@ function filter() {
             .attr('y2', '0%')
             .attr('spreadMethod', 'pad');
 
-        var pct = linspace(1, 100, 6).map(function(d) {
+        var pct = linspace(1, 100, 6).map(function (d) {
             return Math.round(d) + '%';
         });
 
         var colourPct = d3.zip(pct, colorOptions.silverPalette.slice(1));
 
-        colourPct.forEach(function(d) {
+        colourPct.forEach(function (d) {
             gradient.append('stop')
                 .attr('offset', d[0])
                 .attr('stop-color', d[1])
@@ -221,13 +225,13 @@ function filter() {
         });
 
         legendSvg.append('g')
-            .attr('transform','translate(50,10)')
+            .attr('transform', 'translate(50,10)')
             .append('rect')
-                .attr('x1', 0)
-                .attr('y1', 0)
-                .attr('width', 400)
-                .attr('height', 10)
-                .style('fill', 'url(#gradient)');
+            .attr('x1', 0)
+            .attr('y1', 0)
+            .attr('width', 400)
+            .attr('height', 10)
+            .style('fill', 'url(#gradient)');
 
         // create a scale and axis for the legend
         var legendScale = d3.scaleLinear()
@@ -236,7 +240,7 @@ function filter() {
 
         var legendAxis = d3.axisBottom()
             .scale(legendScale)
-            .tickValues([1,70,140,210,280])
+            .tickValues([1, 70, 140, 210, 280])
             .tickSize(0)
             .tickPadding(7)
             .tickFormat(d3.format("d"));
@@ -253,11 +257,11 @@ function filter() {
             .attr('class', 'row mt-2')
             .append('div')
             .attr('class', 'col-sm text-center')
-            .append('div').attr('class','slider-holder');
+            .append('div').attr('class', 'slider-holder');
         setupSlider(
             options.yearOptions[0],
             options.yearOptions[1],
-            function(lo,hi){
+            function (lo, hi) {
                 options.selectedYears[0] = lo;
                 options.selectedYears[1] = hi;
                 refresh();
@@ -265,25 +269,25 @@ function filter() {
             colorScales.medalCountScale);
 
         var row = rootElement.append('div').attr('class', 'row mt-4');
-   /*     genderElement = row.append('div')
-            .attr('class', 'col-sm text-center')
-            .append('div')
-                .attr('class', 'btn-group btn-group-toggle')
-                .attr('data-toggle', 'buttons');
+        /*     genderElement = row.append('div')
+         .attr('class', 'col-sm text-center')
+         .append('div')
+         .attr('class', 'btn-group btn-group-toggle')
+         .attr('data-toggle', 'buttons');
 
-        var enteredGenderLabel = genderElement.selectAll('label')
-                .data(options.genderOptions)
-                .enter().append('label');
+         var enteredGenderLabel = genderElement.selectAll('label')
+         .data(options.genderOptions)
+         .enter().append('label');
 
-        enteredGenderLabel.append('input')
-            .attr('type', 'checkbox')
-            .on('click', function (d) {
-            _filter.selectGender(d)
-        });
-        enteredGenderLabel.append('span').text(function (d) {
-            return d;
-        })
-*/
+         enteredGenderLabel.append('input')
+         .attr('type', 'checkbox')
+         .on('click', function (d) {
+         _filter.selectGender(d)
+         });
+         enteredGenderLabel.append('span').text(function (d) {
+         return d;
+         })
+         */
 
         medalElement = row.append('div')
             .attr('class', 'col-sm text-center')
@@ -292,8 +296,8 @@ function filter() {
             .attr('data-toggle', 'buttons');
 
         var enteredMedalLabel = medalElement.selectAll('label')
-                .data(options.medalOptions)
-                .enter().append('label');
+            .data(options.medalOptions)
+            .enter().append('label');
 
         enteredMedalLabel.append('input')
             .attr('type', 'checkbox').on('click', function (d) {
@@ -311,32 +315,32 @@ function filter() {
             return;
         }
 
-        legendElement.selectAll('#year-output').text(options.selectedYears[0]+" to "+options.selectedYears[1]);
-        legendElement.style('color',colorOptions.silverPalette[4]);
-        rootElement.selectAll('text').style('fill',colorOptions.silverPalette[1]);
-       /* genderElement.selectAll('label').attr('class', function (d) {
-            return (options.selectedGenders.indexOf(d) > -1)
-                ? 'btn btn-secondary active'
-                : 'btn btn-secondary';
-        });
-*/
+        legendElement.selectAll('#year-output').text(options.selectedYears[0] + " to " + options.selectedYears[1]);
+        legendElement.style('color', colorOptions.silverPalette[4]);
+        rootElement.selectAll('text').style('fill', colorOptions.silverPalette[1]);
+        /* genderElement.selectAll('label').attr('class', function (d) {
+         return (options.selectedGenders.indexOf(d) > -1)
+         ? 'btn btn-secondary active'
+         : 'btn btn-secondary';
+         });
+         */
         medalElement.selectAll('label')
-            .attr('style',function(d,i){
+            .attr('style', function (d, i) {
                 var active = (options.selectedMedalTypes.indexOf(d) > -1);
                 var bcolor, color;
 
-                if(d == 'Gold'){
-                    bcolor = active ? colorOptions.goldPalette[2]:colorOptions.goldPalette[1];
-                    color = active ? colorOptions.goldPalette[4]:colorOptions.goldPalette[2];
-                } else if (d == 'Silver'){
-                    bcolor = active ? colorOptions.silverPalette[2]:colorOptions.silverPalette[1];
-                    color = active ? colorOptions.silverPalette[4]:colorOptions.silverPalette[2];
-                } else{
-                    bcolor = active ? colorOptions.bronzePalette[2]:colorOptions.bronzePalette[1];
-                    color = active ? colorOptions.bronzePalette[4]:colorOptions.bronzePalette[2];
+                if (d == 'Gold') {
+                    bcolor = active ? colorOptions.goldPalette[2] : colorOptions.goldPalette[1];
+                    color = active ? colorOptions.goldPalette[4] : colorOptions.goldPalette[2];
+                } else if (d == 'Silver') {
+                    bcolor = active ? colorOptions.silverPalette[2] : colorOptions.silverPalette[1];
+                    color = active ? colorOptions.silverPalette[4] : colorOptions.silverPalette[2];
+                } else {
+                    bcolor = active ? colorOptions.bronzePalette[2] : colorOptions.bronzePalette[1];
+                    color = active ? colorOptions.bronzePalette[4] : colorOptions.bronzePalette[2];
                 }
 
-                return 'color:'+color+';background-color:' +bcolor+';border:1px solid '+color;
+                return 'color:' + color + ';background-color:' + bcolor + ';border:1px solid ' + color;
             })
             .attr('class', function (d) {
                 return (options.selectedMedalTypes.indexOf(d) > -1)
@@ -470,39 +474,42 @@ function filter() {
 }
 
 function map() {
-    var rootElement, svgElement, countryGroupElement,tooltipElement;
-    var currentData,transformedData, _filter;
+    var rootElement, svgElement, countryGroupElement, tooltipElement;
+    var currentData, transformedData, _filter;
 
     var width = 500,
         height = 500,
         projection,
         colorScale = colorScales.medalCountScale,
-        activeColorScale = colorScales.activeMedalCountScale.domain([1,max]);
+        activeColorScale = colorScales.activeMedalCountScale.domain([1, max]);
 
 
-    function aggTrans(){
-        if(!currentData || !_filter){
+    function aggTrans() {
+        if (!currentData || !_filter) {
             return;
         }
 
-        var t = dataAggregateTransform(currentData.medalCounts,_filter,false);
-        return _.map(currentData.atlas.features, function(d){
+        var t = dataAggregateTransform(currentData.medalCounts, _filter, false);
+        return _.map(currentData.atlas.features, function (d) {
             var country = d.properties.name;
-            var stats = _.filter(t, function(x){ return x.country == country});
-            if(stats.length > 0){
+            var stats = _.filter(t, function (x) {
+                return x.country == country
+            });
+            if (stats.length > 0) {
                 var related = stats[0]['historicRegions']
-                    ? _.filter(t, function(x){
-                        return stats[0]['historicRegions'].indexOf(x.country) > -1;})
+                    ? _.filter(t, function (x) {
+                        return stats[0]['historicRegions'].indexOf(x.country) > -1;
+                    })
                     : [];
 
                 stats = stats.concat(related);
             }
 
             d['medals'] = {
-                'total': _.reduce(stats,function(a,x){
+                'total': _.reduce(stats, function (a, x) {
                     return a + x.gold + x.silver + x.bronze;
-                },0),
-                'stats': stats.length > 0 ? stats : [{'country':country,'gold':0,'bronze':0,'silver':0}]
+                }, 0),
+                'stats': stats.length > 0 ? stats : [{'country': country, 'gold': 0, 'bronze': 0, 'silver': 0}]
             };
             return d;
         })
@@ -531,11 +538,11 @@ function map() {
 
         tooltipElement = d3.select("body")
             .append("div")
-                .attr("class", "tooltip")
-                .style("opacity", 0)
-                .style('background', colorOptions.silverPalette[0])
-                .style('color', colorOptions.silverPalette[4])
-                .style('border', '1px solid '+colorOptions.silverPalette[4]);
+            .attr("class", "tooltip")
+            .style("opacity", 0)
+            .style('background', colorOptions.silverPalette[0])
+            .style('color', colorOptions.silverPalette[4])
+            .style('border', '1px solid ' + colorOptions.silverPalette[4]);
 
     }
 
@@ -545,34 +552,34 @@ function map() {
             .translate([width / 2, height / 2]);
         var geoPath = d3.geoPath().projection(projection);
 
-        transformedData = aggTrans(currentData.medalCounts,_filter);
+        transformedData = aggTrans(currentData.medalCounts, _filter);
         var countries = countryGroupElement
             .selectAll("path")
             .data(transformedData);
 
         countries.style("fill", function (d) {
             var medalCount = d.medals.total;
-            return medalCount > 0 ? colorScale(medalCount): colorOptions.silverPalette[0];
+            return medalCount > 0 ? colorScale(medalCount) : colorOptions.silverPalette[0];
         });
 
 
         countries.enter().append("path")
             .attr("d", geoPath)
             .style("fill", function (d) {
-                var medalCount =d.medals.total;
-                return medalCount > 0 ? colorScale(medalCount): colorOptions.silverPalette[0];
+                var medalCount = d.medals.total;
+                return medalCount > 0 ? colorScale(medalCount) : colorOptions.silverPalette[0];
             })
-            .style('stroke',  colorOptions.silverPalette[0])
+            .style('stroke', colorOptions.silverPalette[0])
             .style('stroke-width', 0.3)
             .on('mouseover', function (d) {
 
                 var html = "";
-                d.medals.stats.forEach(function(x){
+                d.medals.stats.forEach(function (x) {
                     html +=
                         "<div class='mb-2'><strong>" + x.country + "</strong><br>" +
-                        "<i>Gold: </i><span class='details'>" + x.gold +"</span><br>"+
-                        "<i>Silver: </i><span class='details'>" + x.silver +"</span><br>" +
-                        "<i>Bronze: </i><span class='details'>" + x.bronze +"</span></div>"
+                        "<i>Gold: </i><span class='details'>" + x.gold + "</span><br>" +
+                        "<i>Silver: </i><span class='details'>" + x.silver + "</span><br>" +
+                        "<i>Bronze: </i><span class='details'>" + x.bronze + "</span></div>"
                 });
 
                 tooltipElement.transition()
@@ -583,12 +590,12 @@ function map() {
                     .style("top", (d3.event.pageY - 28) + "px");
 
                 d3.select(this)
-                    //.style("opacity", .8)
-                    //.moveToFront()
-                   // .style("stroke", "#252525")
+                //.style("opacity", .8)
+                //.moveToFront()
+                // .style("stroke", "#252525")
                     .style("fill", function (d) {
                         var medalCount = d.medals.total;
-                        return medalCount > 0 ? activeColorScale(medalCount):colorOptions.goldPalette[0];
+                        return medalCount > 0 ? activeColorScale(medalCount) : colorOptions.goldPalette[0];
                     });
             })
             .on('mouseout', function (d) {
@@ -597,18 +604,18 @@ function map() {
                     .style("opacity", 0);
 
                 d3.select(this)
-                   // .style("opacity", 1)
-                    //.style("stroke",  colorOptions.silverPalette[0])
-                   // .style("stroke-width", 0.3)
+                // .style("opacity", 1)
+                //.style("stroke",  colorOptions.silverPalette[0])
+                // .style("stroke-width", 0.3)
                     .style("fill", function (d) {
                         var medalCount = d.medals.total;
-                        return medalCount > 0 ? colorScale(medalCount): colorOptions.silverPalette[0];
+                        return medalCount > 0 ? colorScale(medalCount) : colorOptions.silverPalette[0];
                     });
             })
             .on('click', function (d) {
                 d3.select(this).classed("active", !d3.select(this).classed("active"))
                 if (_filter) {
-                    d.medals.stats.forEach(function(c){
+                    d.medals.stats.forEach(function (c) {
                         _filter.selectCountry(c.country);
                     });
 
@@ -683,7 +690,7 @@ function drilldown() {
         .rangeRound([500, 50]);
 
     var medalColorScale = colorScales.medalScale
-        .domain(['bronze','silver','gold']);
+        .domain(['bronze', 'silver', 'gold']);
 
     function init(parent) {
         rootElement = d3.select(parent)
@@ -692,7 +699,7 @@ function drilldown() {
             .attr('height', height);
         legendElement = rootElement.append('g')
             .attr('width', 300)
-            .attr('height',450);
+            .attr('height', 450);
         countryElement = rootElement.append('g')
             .attr('width', 300)
             .attr('height', 350)
@@ -703,33 +710,39 @@ function drilldown() {
             .attr('height', 450);
 
 
-
     }
 
     function render() {
-        var data = _.range(max,-1,-20);
+        var data = _.range(max, -1, -20);
 
 
         legendElement.selectAll('line')
             .data(data)
             .enter().append('line')
-            .attr('y1',function(d){return y(d);})
+            .attr('y1', function (d) {
+                return y(d);
+            })
             .attr('x1', 0)
-            .attr('y2',function(d){return y(d);})
+            .attr('y2', function (d) {
+                return y(d);
+            })
             .attr('x1', 500)
             .style('stroke', colorOptions.silverPalette[1])
-            .style('stroke-width','1')
+            .style('stroke-width', '1')
 
         legendElement.selectAll('text')
             .data(data)
             .enter()
             .append('text')
-            .text(function(d){
-                return d;})
-            .attr('x',470)
-            .attr('y',function(d){return y(d) + 15;})
-            .attr('height',20)
-            .attr('width',40)
+            .text(function (d) {
+                return d;
+            })
+            .attr('x', 470)
+            .attr('y', function (d) {
+                return y(d) + 15;
+            })
+            .attr('height', 20)
+            .attr('width', 40)
             .style('fill', colorOptions.silverPalette[2]);
 
         countryElement.selectAll('rect').remove();
@@ -741,9 +754,11 @@ function drilldown() {
             .attr('width', 200)
             .attr('x', 0)
             .attr('y', function (d, i) {
-                return (i * 50)+5;
+                return (i * 50) + 5;
             })
-            .attr('style', function(d,i) { return 'fill:white;stroke:' + colorOptions.silverPalette[2] + ';'})
+            .attr('style', function (d, i) {
+                return 'fill:white;stroke:' + colorOptions.silverPalette[2] + ';'
+            })
             .on('click', function (d) {
                 _filter.deselectCountry(d);
             });
@@ -756,7 +771,9 @@ function drilldown() {
             .attr('height', 50)
             .attr('width', 200)
             .attr('font-size', 16)
-            .attr('style', function(d,i) { return 'fill:' + colorOptions.silverPalette[2] + ';'})
+            .attr('style', function (d, i) {
+                return 'fill:' + colorOptions.silverPalette[2] + ';'
+            })
             .attr('x', 25)
             .attr('y', function (d, i) {
                 return (i * 50) + 30;
@@ -769,13 +786,12 @@ function drilldown() {
             });
 
 
-
         //stackedBarElement.selectAll(".layer").remove();
 
-        var data = dataAggregateTransform(currentData,_filter,true);
+        var data = dataAggregateTransform(currentData, _filter, true);
 
         var layers = d3.stack()
-            .keys(['bronze','silver','gold'])
+            .keys(['bronze', 'silver', 'gold'])
             (data);
 
         var layer = stackedBarElement.selectAll(".layer")
@@ -784,16 +800,17 @@ function drilldown() {
         var newLayers = layer.enter().append("g")
             .attr("class", "layer")
             .attr("transform", "translate(0,0)")
-            .style("fill", function(d, i) { return medalColorScale(i); })
-            .style("stroke", function(d, i) {
-                if(d.key =='gold'){
+            .style("fill", function (d, i) {
+                return medalColorScale(i);
+            })
+            .style("stroke", function (d, i) {
+                if (d.key == 'gold') {
                     return colorOptions.goldPalette[3];
-                } else if(d.key =='silver'){
+                } else if (d.key == 'silver') {
                     return colorOptions.silverPalette[3];
                 } else {
                     return colorOptions.bronzePalette[3];
                 }
-
 
 
             })
@@ -802,29 +819,38 @@ function drilldown() {
         layer.exit().remove();
 
         var block = layer.selectAll("rect")
-            .data(function(d) { return d; });
+            .data(function (d) {
+                return d;
+            });
 
         block.transition()
-            .attr("y", function(d) { return y(d[1]); })
-          //  .attr('style','stroke:'+ colorOptions.silverPalette[2])
-            .attr("height", function(d) { return y(d[0]) - y(d[1]) - 1; })
+            .attr("y", function (d) {
+                return y(d[1]);
+            })
+            //  .attr('style','stroke:'+ colorOptions.silverPalette[2])
+            .attr("height", function (d) {
+
+                return y(d[0]) - y(d[1]) - 1 > 0 ? y(d[0]) - y(d[1]) - 1 : 0;
+            })
 
         block.enter().append("rect")
 
-            .attr("x", function(d,i) { return (i*50)+5; })
-            .attr("y", function(d) { return y(d[1]); })
-           // .attr('style','stroke:'+ colorOptions.silverPalette[2])
-            .attr("height", function(d) {
+            .attr("x", function (d, i) {
+                return (i * 50) + 5;
+            })
+            .attr("y", function (d) {
+                return y(d[1]);
+            })
+            // .attr('style','stroke:'+ colorOptions.silverPalette[2])
+            .attr("height", function (d) {
                 var y1 = y(d[0]);
                 var y2 = y(d[1]);
 
-                return y1 - y2 - 1;
+                return y1 - y2 - 1 > 0 ? y1 - y2 - 1 : 0;
             })
             .attr("width", 40);
 
         block.exit().remove()
-
-
 
 
     }
@@ -832,7 +858,7 @@ function drilldown() {
     function _drilldown(selection) {
         selection.each(function (data, i) {
             currentData = data.medalCounts;
-            y.domain([0,max]);
+            y.domain([0, max]);
             if (!rootElement) {
                 init(this);
             }
@@ -860,11 +886,11 @@ function viz() {
         height = 500;
     var rootElement, leftColElement, rightColElement;
 
-    function setDomain(data){
+    function setDomain(data) {
         var transformed = dataAggregateTransform(data)
-        max =  d3.max(transformed,
-            function(d) {
-                return d.gold+d.silver+d.bronze;
+        max = d3.max(transformed,
+            function (d) {
+                return d.gold + d.silver + d.bronze;
             });
         colorScales.medalCountScale.domain([
             0,
