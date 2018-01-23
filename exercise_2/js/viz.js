@@ -1,49 +1,56 @@
 'use strict';
-var colorOptions = {
-    colorPalette: [
-        '#f7f7f7',
-        '#d9d9d9',
-        '#bdbdbd',
-        '#969696',
-        '#737373',
-        '#525252',
-        '#252525'
+var colorOptions = (function() {
+    var bronzePalette=[
+        "#FFFAF5",
+        "#FFEAD9",
+        "#F1C8A7",
+        "#CB9366",
+        "#A3612B"
     ],
-    hoverColorPalette:[
-        '#eff3ff',
-        '#c6dbef',
-        '#9ecae1',
-        '#6baed6',
-        '#4292c6',
-        '#2171b5',
-        '#084594'
+    silverPalette=[
+        "#DBDEE3",
+        "#A7B0C1",
+        "#7483A0",
+        "#4B5F87",
+        "#253D6D"
     ],
-    activeColorPalette:[
-        '#eff3ff',
-        '#c6dbef',
-        '#9ecae1',
-        '#6baed6',
-        '#4292c6',
-        '#2171b5',
-        '#084594'
+
+    goldPalette=[
+        "#FFFDF5",
+        "#FFF8D9",
+        "#F1E3A7",
+        "#CBB866",
+        "#A38D2B"
     ],
-    medalColors: ["#a17419",'#b7b7b7',"#d5a500"] //bronze, silver, gold
-};
+    medalColors=[
+        bronzePalette[2],
+        silverPalette[1],
+        goldPalette[2]
+    ]; //bronze, silver, gold
+
+    return {
+        bronzePalette:bronzePalette,
+        silverPalette:silverPalette,
+        goldPalette:goldPalette,
+        medalColors:medalColors
+    };
+})();
+
 var colorScales = {
     medalScale:d3.scaleOrdinal()
         .range(colorOptions.medalColors),
     medalCountScale:d3.scaleLinear()
         .range([
-            colorOptions.colorPalette[1],
-            colorOptions.colorPalette[6]]),
+            colorOptions.silverPalette[1],
+            colorOptions.silverPalette[4]]),
     hoverMedalCountScale:d3.scaleLinear()
         .range([
-            colorOptions.hoverColorPalette[1],
-            colorOptions.hoverColorPalette[6]]),
+            colorOptions.bronzePalette[1],
+            colorOptions.bronzePalette[4]]),
     activeMedalCountScale: d3.scaleLinear()
         .range([
-            colorOptions.activeColorPalette[1],
-            colorOptions.activeColorPalette[6]])
+            colorOptions.goldPalette[1],
+            colorOptions.goldPalette[4]])
 };
 
 var max;
@@ -204,7 +211,7 @@ function filter() {
             return Math.round(d) + '%';
         });
 
-        var colourPct = d3.zip(pct, colorOptions.colorPalette.slice(1));
+        var colourPct = d3.zip(pct, colorOptions.silverPalette.slice(1));
 
         colourPct.forEach(function(d) {
             gradient.append('stop')
@@ -255,7 +262,7 @@ function filter() {
                 options.selectedYears[1] = hi;
                 refresh();
             },
-            function(x){return colorOptions.colorPalette[3];})
+            colorScales.medalCountScale);
 
         var row = rootElement.append('div').attr('class', 'row mt-4');
    /*     genderElement = row.append('div')
@@ -305,18 +312,37 @@ function filter() {
         }
 
         legendElement.selectAll('#year-output').text(options.selectedYears[0]+" to "+options.selectedYears[1]);
-
+        legendElement.style('color',colorOptions.silverPalette[4]);
+        rootElement.selectAll('text').style('fill',colorOptions.silverPalette[1]);
        /* genderElement.selectAll('label').attr('class', function (d) {
             return (options.selectedGenders.indexOf(d) > -1)
                 ? 'btn btn-secondary active'
                 : 'btn btn-secondary';
         });
 */
-        medalElement.selectAll('label').attr('class', function (d) {
-            return (options.selectedMedalTypes.indexOf(d) > -1)
-                ? 'filter-button btn btn-secondary  active'
-                : 'filter-button btn btn-secondary';
-        });
+        medalElement.selectAll('label')
+            .attr('style',function(d,i){
+                var active = (options.selectedMedalTypes.indexOf(d) > -1);
+                var bcolor, color;
+
+                if(d == 'Gold'){
+                    bcolor = active ? colorOptions.goldPalette[2]:colorOptions.goldPalette[1];
+                    color = active ? colorOptions.goldPalette[4]:colorOptions.goldPalette[2];
+                } else if (d == 'Silver'){
+                    bcolor = active ? colorOptions.silverPalette[2]:colorOptions.silverPalette[1];
+                    color = active ? colorOptions.silverPalette[4]:colorOptions.silverPalette[2];
+                } else{
+                    bcolor = active ? colorOptions.bronzePalette[2]:colorOptions.bronzePalette[1];
+                    color = active ? colorOptions.bronzePalette[4]:colorOptions.bronzePalette[2];
+                }
+
+                return 'color:'+color+';background-color:' +bcolor+';border:1px solid '+color;
+            })
+            .attr('class', function (d) {
+                return (options.selectedMedalTypes.indexOf(d) > -1)
+                    ? 'filter-button btn btn-secondary  active'
+                    : 'filter-button btn btn-secondary';
+            });
 
 
     }
@@ -503,9 +529,14 @@ function map() {
                 })
         );
 
-        tooltipElement = d3.select("body").append("div")
-            .attr("class", "tooltip")
-            .style("opacity", 0);
+        tooltipElement = d3.select("body")
+            .append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0)
+                .style('background', colorOptions.silverPalette[0])
+                .style('color', colorOptions.silverPalette[4])
+                .style('border', '1px solid '+colorOptions.silverPalette[4]);
+
     }
 
     function render() {
@@ -521,7 +552,7 @@ function map() {
 
         countries.style("fill", function (d) {
             var medalCount = d.medals.total;
-            return medalCount > 0 ? colorScale(medalCount): colorOptions.colorPalette[0];
+            return medalCount > 0 ? colorScale(medalCount): colorOptions.silverPalette[0];
         });
 
 
@@ -529,9 +560,9 @@ function map() {
             .attr("d", geoPath)
             .style("fill", function (d) {
                 var medalCount =d.medals.total;
-                return medalCount > 0 ? colorScale(medalCount): colorOptions.colorPalette[0];
+                return medalCount > 0 ? colorScale(medalCount): colorOptions.silverPalette[0];
             })
-            .style('stroke',  colorOptions.colorPalette[0])
+            .style('stroke',  colorOptions.silverPalette[0])
             .style('stroke-width', 0.3)
             .on('mouseover', function (d) {
 
@@ -557,7 +588,7 @@ function map() {
                    // .style("stroke", "#252525")
                     .style("fill", function (d) {
                         var medalCount = d.medals.total;
-                        return medalCount > 0 ? activeColorScale(medalCount):colorOptions.activeColorPalette[0];
+                        return medalCount > 0 ? activeColorScale(medalCount):colorOptions.goldPalette[0];
                     });
             })
             .on('mouseout', function (d) {
@@ -567,11 +598,11 @@ function map() {
 
                 d3.select(this)
                    // .style("opacity", 1)
-                    //.style("stroke",  colorOptions.colorPalette[0])
+                    //.style("stroke",  colorOptions.silverPalette[0])
                    // .style("stroke-width", 0.3)
                     .style("fill", function (d) {
                         var medalCount = d.medals.total;
-                        return medalCount > 0 ? colorScale(medalCount): colorOptions.colorPalette[0];
+                        return medalCount > 0 ? colorScale(medalCount): colorOptions.silverPalette[0];
                     });
             })
             .on('click', function (d) {
@@ -686,7 +717,7 @@ function drilldown() {
             .attr('x1', 0)
             .attr('y2',function(d){return y(d);})
             .attr('x1', 500)
-            .style('stroke', colorOptions.colorPalette[1])
+            .style('stroke', colorOptions.silverPalette[1])
             .style('stroke-width','1')
 
         legendElement.selectAll('text')
@@ -699,7 +730,7 @@ function drilldown() {
             .attr('y',function(d){return y(d) + 15;})
             .attr('height',20)
             .attr('width',40)
-            .style('fill', colorOptions.colorPalette[2]);
+            .style('fill', colorOptions.silverPalette[2]);
 
         countryElement.selectAll('rect').remove();
         countryElement.selectAll('rect')
@@ -711,7 +742,8 @@ function drilldown() {
             .attr('x', 0)
             .attr('y', function (d, i) {
                 return (i * 50)+5;
-            }).attr('style', 'fill:white;stroke:' + colorOptions.colorPalette[2] + ';')
+            })
+            .attr('style', function(d,i) { return 'fill:white;stroke:' + colorOptions.silverPalette[2] + ';'})
             .on('click', function (d) {
                 _filter.deselectCountry(d);
             });
@@ -724,6 +756,7 @@ function drilldown() {
             .attr('height', 50)
             .attr('width', 200)
             .attr('font-size', 16)
+            .attr('style', function(d,i) { return 'fill:' + colorOptions.silverPalette[2] + ';'})
             .attr('x', 25)
             .attr('y', function (d, i) {
                 return (i * 50) + 30;
@@ -751,7 +784,20 @@ function drilldown() {
         var newLayers = layer.enter().append("g")
             .attr("class", "layer")
             .attr("transform", "translate(0,0)")
-            .style("fill", function(d, i) { return medalColorScale(i); });
+            .style("fill", function(d, i) { return medalColorScale(i); })
+            .style("stroke", function(d, i) {
+                if(d.key =='gold'){
+                    return colorOptions.goldPalette[3];
+                } else if(d.key =='silver'){
+                    return colorOptions.silverPalette[3];
+                } else {
+                    return colorOptions.bronzePalette[3];
+                }
+
+
+
+            })
+
 
         layer.exit().remove();
 
@@ -760,18 +806,19 @@ function drilldown() {
 
         block.transition()
             .attr("y", function(d) { return y(d[1]); })
-            .attr('style','stroke:'+ colorOptions.colorPalette[2])
-            .attr("height", function(d) { return y(d[0]) - y(d[1]); })
+          //  .attr('style','stroke:'+ colorOptions.silverPalette[2])
+            .attr("height", function(d) { return y(d[0]) - y(d[1]) - 1; })
 
         block.enter().append("rect")
+
             .attr("x", function(d,i) { return (i*50)+5; })
             .attr("y", function(d) { return y(d[1]); })
-            .attr('style','stroke:'+ colorOptions.colorPalette[2])
+           // .attr('style','stroke:'+ colorOptions.silverPalette[2])
             .attr("height", function(d) {
                 var y1 = y(d[0]);
                 var y2 = y(d[1]);
 
-                return y1 - y2;
+                return y1 - y2 - 1;
             })
             .attr("width", 40);
 

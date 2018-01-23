@@ -34,7 +34,6 @@ body{
 }
 
 .track {
-    stroke: #bbb;
     stroke-width: 10px;
 }
 
@@ -45,37 +44,31 @@ body{
 }
 
 .sel-range{
-    stroke: #737373;
     stroke-width: 8px;
 }
 
 .handle {
-    fill: #525252;
     stroke: #000;
     stroke-opacity: 0.5;
     stroke-width: 1.25px;
 }
 .handle:hover{
-    fill: #969696;
-}
+ }
 .handle.active {
-    fill: #969696;
-}
+  }
 
 .legend text{
-    fill:#bdbdbd;
+
     font-weight:bold;
     font-size:14px;
 }
 
 .filter-button.active{
-    background-color: #525252 !important;
 }
 
 .filter-button{
-    background-color:#737373 !important;
-    font-weight: bold !important;
-    color:#bdbdbd !important;
+   font-weight: bold !important;
+
 }
 
 div.tooltip {
@@ -85,7 +78,6 @@ div.tooltip {
 
     padding: 10px;
 
-    background: #bdbdbd;
-    border: 1px solid #525252;
+
     pointer-events: none;
 }
