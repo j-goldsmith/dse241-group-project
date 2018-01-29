@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <title>Exercise 2</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+    <script type="application/javascript" src="js/underscore-min.js"></script>
+    <script type="application/javascript" src="js/d3.v4.min.js"></script>
+    <script type="application/javascript" src="js/topojson.js"></script>
+
+    <link type="text/css" rel="stylesheet" href="css/bootstrap.min.css">
+    <link type="text/css" rel="stylesheet" href="css/viz.css"  />
+
+    <script type="application/javascript" src="js/slider.js"></script>
+    <script type="application/javascript" src="js/viz.js"></script>
+</head>
+<body>
+    <script type="application/javascript">
+        d3.queue()
+            .defer(d3.json, "data/world_countries.json")
+            .defer(d3.json, "data/data.json")
+            .await(init);
+
+        function init(error, atlas, medalCounts) {
+            if(error) { console.log(error); }
+
+            d3.select("body")
+                .datum({
+                    'atlas':atlas,
+                    'medalCounts':medalCounts
+                })
+                .call(viz());
+        }
+    </script>
+</body>
+</html>

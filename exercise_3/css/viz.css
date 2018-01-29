@@ -1,0 +1,83 @@
+body{
+    font:14px 'Open Sans', sans-serif !important;
+}
+.map{
+    height:500px;
+    width:570px;
+}
+
+.drilldown{
+    height:500px;
+    width:100%;
+}
+
+/*************/
+
+.selected-country{
+
+}
+
+.slider-holder{
+
+}
+
+/* slider ------------------------------ */
+
+.ticks {
+    font-size: 14px;
+}
+
+.track,
+.track-inset,
+.track-overlay {
+    stroke-linecap: round;
+}
+
+.track {
+    stroke-width: 10px;
+}
+
+.track-overlay {
+    pointer-events: stroke;
+    stroke-width: 50px;
+    cursor: crosshair;
+}
+
+.sel-range{
+    stroke-width: 8px;
+}
+
+.handle {
+    stroke: #000;
+    stroke-opacity: 0.5;
+    stroke-width: 1.25px;
+}
+.handle:hover{
+ }
+.handle.active {
+  }
+
+.legend text{
+
+    font-weight:bold;
+    font-size:14px;
+}
+
+.filter-button.active{
+}
+
+.filter-button{
+   font-weight: bold !important;
+
+}
+
+div.tooltip {
+    position: absolute;
+    text-align: left;
+    width: auto;
+
+    padding: 10px;
+
+
+    pointer-events: none;
+}
