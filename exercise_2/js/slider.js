@@ -22,35 +22,30 @@ function setupSlider(v1, v2, callback, color){
 
     slider.append("line")
         .attr("class", "track")
-        .style("stroke", function(x){return color(1);})
         .attr("x1", 10+x.range()[0])
         .attr("x2", 10+x.range()[1])
 
     var selRange = slider.append("line")
         .attr("class", "sel-range")
-        .style("stroke", function(x){return color(140);})
-
         .attr("x1", 10+x(sliderVals[0]))
         .attr("x2", 10+x(sliderVals[1]))
 
     slider.insert("g", ".track-overlay")
         .attr("class", "ticks")
         .attr("transform", "translate(10,24)")
-
         .selectAll("text")
         .data(x.ticks(10))
         .enter().append("text")
         .attr("x", x)
         .attr("text-anchor", "middle")
         .style("font-weight", "bold")
+        .style("fill", function(x){return color(x);})
         .text(function(d) { return d; });
 
     var handle = slider.selectAll("rect")
         .data([0, 1])
         .enter().append("rect", ".track-overlay")
         .attr("class", "handle")
-        .style("fill", function(x){return color(200);})
-
         .attr("y", -8)
         .attr("x", function(d) { return x(sliderVals[d]); })
         .attr("rx", 3)
