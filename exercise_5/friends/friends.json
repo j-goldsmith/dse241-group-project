@@ -1,0 +1,85 @@
+{
+    "nodes": [{
+        "name": "주홍철",
+        "group": 1
+    }, {
+        "name": "박종선",
+        "group": 1
+    }, {
+        "name": "연제호",
+        "group": 1
+    }, {
+        "name": "최재영",
+        "group": 1
+    }, {
+        "name": "최주원",
+        "group": 1
+    }, {
+        "name": "양영주",
+        "group": 2
+    }, {
+        "name": "초지",
+        "group": 2
+    }, {
+        "name": "설효정",
+        "group": 2
+    }, {
+        "name": "최이백",
+        "group": 3
+    }, {
+        "name": "오규영",
+        "group": 3
+    }, {
+        "name": "조용덕",
+        "group": 3
+    }],
+    "links": [{
+        "source": 0,
+        "target": 1
+    },{
+        "source": 0,
+        "target": 2
+    },{
+        "source": 0,
+        "target": 3
+    },{
+        "source": 0,
+        "target": 4
+    },{
+        "source": 1,
+        "target": 2
+    },{
+        "source": 1,
+        "target": 3
+    },{
+        "source": 1,
+        "target": 4
+    },{
+        "source": 2,
+        "target": 3
+    },{
+        "source": 2,
+        "target": 4
+    },{
+        "source": 0,
+        "target": 5
+    },{
+        "source": 5,
+        "target": 6
+    },{
+        "source": 5,
+        "target": 7
+    },{
+        "source": 0,
+        "target": 8
+    },{
+        "source": 0,
+        "target": 9
+    },{
+        "source": 0,
+        "target": 10
+    },{
+        "source": 8,
+        "target": 7
+    }]
+}
