@@ -14,10 +14,9 @@
     <link type="text/css" rel="stylesheet" href="css/bootstrap.min.css">
     <link type="text/css" rel="stylesheet" href="css/viz.css"  />
 
-    <script type="application/javascript" src="js/slider.js"></script>
-    <script type="application/javascript" src="js/viz.js"></script>
 </head>
 <body>
+<h3>Sheep</h3>
     <script type="application/javascript">
         d3.queue()
             //.defer(d3.json, "data/sheep_age.json")
@@ -92,7 +91,17 @@
             //.force("y", d3.forceY(0.001))
             //.force("x", d3.forceX(0.001));
 		
-		var colorp = d3.scaleOrdinal(d3.schemeCategory10); // D3 Version 4
+		var colorp = d3.scaleOrdinal([
+        '#ffffd9',
+        '#edf8b1',
+        '#c7e9b4',
+        '#7fcdbb',
+        '#41b6c4',
+        '#1d91c0',
+        '#225ea8',
+        '#253494',
+        '#081d58'
+        ]).domain([1,2,3,4,5,6,7,8,9]); // D3 Version 4
 		
         function dragstarted(d) {
             if (!d3.event.active) simulation.alphaTarget(0.3).restart();
@@ -145,15 +154,23 @@
 
             node.append('circle')
                 .attr('r', function (d) {
-                    return (d.degree);
+                    return 20;//(d.degree);
                 })
                 .attr('fill', function (d) {
                     return colorp(d.age);
                 });
 
             node.append("text")
-                .attr("dx", -6)
-                .attr("dy", 6)
+               /* .attr("dx", function(d){
+                    return d.id > 9 ? -6 : -3;
+                })
+                .attr("dy", function(d){
+                    return d.id > 9 ? 6 : 3;
+                })*/
+                .attr("x", 0)
+                .attr("dy", ".35em")
+                .attr("text-anchor", "middle")
+                .style("stroke",function(d){ return d.age > 5 ? "#ffffd9" : "#081d58"})
                 .style("font-family", "overwatch")
                 .style("font-size", "14px")
 				.text(function (d) {
@@ -164,7 +181,7 @@
 							div.transition()
 							   .duration(20)
 							   .style("opacity", 1);
-							div.html("ID:"+  d.id + "\nAge: "+d.age)
+							div.html("ID:"+  d.id + "<br />Age: "+d.age)
 								.style("left", (d3.event.pageX) + "px")
 								.style("top", (d3.event.pageY - 35) + "px");
 				})
