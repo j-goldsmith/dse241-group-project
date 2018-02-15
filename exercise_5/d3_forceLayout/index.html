@@ -174,7 +174,7 @@
 								nodeweight[i] = 1;	
 					};
 					json.links.forEach(function (l) {
-								nodeweight[l.target.index] = nodeweight[l.target.index]+l.weight;
+								nodeweight[l.source.index] = nodeweight[l.source.index]+l.weight;
 					});
 					console.log(nodeweight);
 					console.log(nodeweight[d.index]);
