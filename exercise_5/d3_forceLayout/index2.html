@@ -14,14 +14,10 @@
     <link type="text/css" rel="stylesheet" href="css/bootstrap.min.css">
     <link type="text/css" rel="stylesheet" href="css/viz.css"  />
 
+    <script type="application/javascript" src="js/slider.js"></script>
+    <script type="application/javascript" src="js/viz.js"></script>
 </head>
 <body>
-<h3>BIGHORN SHEEP DOMINANCE</h3>
-<div id="element1">
-Data record wins and losses for 28 female bighorn sheep observed on the National Bison Range in 1984. The 'Weight' entry is the number of occasions on which the Source sheep was observed dominating the Target sheep. Ages are listed, but those assigned an age of 9 are at least 9 years old; they may be older.
-</div>
-<div id="slider"></div>
-<div id="graph">
     <script type="application/javascript">
         d3.queue()
             //.defer(d3.json, "data/sheep_age.json")
@@ -39,16 +35,15 @@ Data record wins and losses for 28 female bighorn sheep observed on the National
                 })
                 .call(viz());
         }*/
-		var width = 600,
-            height = 500;
-			
-		//h = 500 - margin.t - margin.b;
-        var svg = d3.select("#graph").append("svg")
+		var width = 1200,
+            height = 800
+
+        var svg = d3.select("body").append("svg")
             .attr("width", width)
             .attr("height", height); 
 		
 		//Start tooltip code	
-		var div = d3.select("#graph").append("div")
+		var div = d3.select("body").append("div")
 					.attr("class", "tooltip")
 					.style("opacity", 0);
 		//End tooltip code
@@ -97,17 +92,7 @@ Data record wins and losses for 28 female bighorn sheep observed on the National
             //.force("y", d3.forceY(0.001))
             //.force("x", d3.forceX(0.001));
 		
-		var colorp = d3.scaleOrdinal([
-        '#ffffd9',
-        '#edf8b1',
-        '#c7e9b4',
-        '#7fcdbb',
-        '#41b6c4',
-        '#1d91c0',
-        '#225ea8',
-        '#253494',
-        '#081d58'
-        ]).domain([1,2,3,4,5,6,7,8,9]); // D3 Version 4
+		var colorp = d3.scaleOrdinal(d3.schemeCategory10); // D3 Version 4
 		
         function dragstarted(d) {
             if (!d3.event.active) simulation.alphaTarget(0.3).restart();
@@ -160,23 +145,15 @@ Data record wins and losses for 28 female bighorn sheep observed on the National
 
             node.append('circle')
                 .attr('r', function (d) {
-                    return 20;//(d.degree);
+                    return (d.age+10);
                 })
                 .attr('fill', function (d) {
                     return colorp(d.age);
-                })
+                });
 
             node.append("text")
-               /* .attr("dx", function(d){
-                    return d.id > 9 ? -6 : -3;
-                })
-                .attr("dy", function(d){
-                    return d.id > 9 ? 6 : 3;
-                })*/
-                .attr("x", 0)
-                .attr("dy", ".35em")
-                .attr("text-anchor", "middle")
-                .style("stroke",function(d){ return d.age > 5 ? "#ffffd9" : "#081d58"})
+                .attr("dx", -6)
+                .attr("dy", 6)
                 .style("font-family", "overwatch")
                 .style("font-size", "14px")
 				.text(function (d) {
@@ -187,7 +164,7 @@ Data record wins and losses for 28 female bighorn sheep observed on the National
 							div.transition()
 							   .duration(20)
 							   .style("opacity", 1);
-							div.html("ID:"+  d.id + "<br />Age: "+d.age)
+							div.html("ID:"+  d.id + "\nAge: "+d.age)
 								.style("left", (d3.event.pageX) + "px")
 								.style("top", (d3.event.pageY - 35) + "px");
 				})
@@ -294,105 +271,9 @@ Data record wins and losses for 28 female bighorn sheep observed on the National
 		}
 
 		node.on('click', connectedNodes) //Added code 
-		.on('dblclick',AllconnectedNodes)
+		.on('dblclick',AllconnectedNodes);
 		//End code for node selection
-		
-		//Legend code
-		//Append a defs (for definition) element to your SVG
-		var defs = svg.append("defs");
-		//Append a linearGradient element to the defs and give it a unique id
-		var linearGradient = defs.append("linearGradient")
-		.attr("id", "linear-gradient");
-		
-		svg.append("rect")
-		.attr("width", 300)
-		.attr("height", 20)
-		.attr("x",50)
-		.attr("y",480)
-		.style("fill", "url(#linear-gradient)");
-		
-		linearGradient.selectAll("stop") 
-		.data( colorp.range() )                  
-		.enter().append("stop")
-		.attr("offset", function(d,i) { return i/(colorp.range().length-1); })
-		.attr("stop-color", function(d) { return d; });
-		
-		/*linearGradient.append('text')                                     // NEW
-          .attr('x', 50 + 30)              // NEW
-          .attr('y', 410)              // NEW
-          .text('Age')
-		  .style("stroke","#ffffd9")
-          .style("font-family", "overwatch")
-          .style("font-size", "14px");*/
-		  
-		  
-		//Slider code
-		var margin = {top:0, right:50, bottom:0, left:50};
-		width = 800;
-		height = 70;
-var svgSlider = d3.select("#slider")
-    .append("svg")
-    .attr("width", width)
-    .attr("height", height);
-    
-var x = d3.scaleLinear()
-    .domain([0,1,2,3,4,5,6,7,8,9,10])
-    .range([0, width]);
-    //.clamp(true);
-
-var slider = svgSlider.append("g")
-    .attr("class", "slider")
-    .attr("transform", "translate(" + margin.left + "," + height / 2 + ")");
-
-slider.append("line")
-    .attr("class", "track")
-    .attr("x1", x.range()[0])
-    .attr("x2", x.range()[1])
-  .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
-    .attr("class", "track-inset")
-  .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
-    .attr("class", "track-overlay")
-    .call(d3.drag()
-        .on("start.interrupt", function() { slider.interrupt(); })
-        .on("start drag", function() { update(x.invert(d3.event.x)); }));
-
-slider.insert("g", ".track-overlay")
-    .attr("class", "ticks")
-    .attr("transform", "translate(0," + 18 + ")")
-  .selectAll("text")
-    .data(x.ticks(10))
-    .enter()
-    .append("text")
-    .attr("x", x)
-    .attr("y", 10)
-    .attr("text-anchor", "middle")
-    .text(function(d) { return d; });
-
-var handle = slider.insert("circle", ".track-overlay")
-    .attr("class", "handle")
-    .attr("r", 9);
-
-var label = slider.append("text")  
-    .attr("class", "label")
-    .attr("text-anchor", "middle")
-    .text(0)
-    .attr("transform", "translate(0," + (-25) + ")");
-	
-	function update(h) {
-  // update position and text of label according to slider scale
-  handle.attr("cx", x(h));
-  label
-    .attr("x", x(h))
-    .text(h);
-
-  // filter data set and redraw plot
-  var newData = json.nodes.filter(function(d) {
-    return d.age < h;
-  })
-  init(error,newData);
-}
 		}
     </script>
-</div>
 </body>
 </html>

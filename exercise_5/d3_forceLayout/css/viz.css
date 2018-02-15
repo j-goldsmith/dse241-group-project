@@ -99,9 +99,13 @@ div.tooltip {
     stroke-opacity: .6;
 }
 
-html, body, #graph {
+html, body {
     width: 900px;
-    height: 500px;
+    height: 700px;
+}
+
+h3 {
+	margin-left:5px;
 }
 
 div.tooltip {
@@ -116,3 +120,44 @@ div.tooltip {
   border-radius: 8px;
   pointer-events: none;
 }
+
+.container {
+  float: left;
+}
+
+#element1 {margin-left:10px;margin-right:10px; width:500px;} 
+#graph {display:inline-block; width:600px;margin-left:20px} 
+
+.ticks {
+      font-size: 10px;
+    }
+
+.track,
+    .track-inset,
+    .track-overlay {
+      stroke-linecap: round;
+    }
+
+    .track {
+      stroke: #000;
+      stroke-opacity: 0.3;
+      stroke-width: 10px;
+    }
+
+    .track-inset {
+      stroke: #dcdcdc;
+      stroke-width: 8px;
+    }
+
+    .track-overlay {
+      pointer-events: stroke;
+      stroke-width: 50px;
+      stroke: transparent;
+      cursor: crosshair;
+    }
+
+    .handle {
+      fill: #fff;
+      stroke: #000;
+      stroke-opacity: 0.5;
+      stroke-width: 1.25px;
