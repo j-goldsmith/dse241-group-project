@@ -178,10 +178,7 @@
 					});
 					console.log(nodeweight);
 					console.log(nodeweight[d.index]);
-					//if (nodeweight[d.index] < 10) {return 15;}
-					//else {return nodeweight[d.index]}
 					return (Math.sqrt(nodeweight[d.index])*3+10)}
-					//return nodeweight[d.index]};
 			
             node.append("text")
                /* .attr("dx", function(d){
@@ -204,7 +201,7 @@
 							div.transition()
 							   .duration(20)
 							   .style("opacity", 1);
-							div.html("ID:"+  d.id + "<br />Age: "+d.age)
+							div.html("ID:"+  d.id + "<br />Age: "+d.age + "<br />Aggression: " + Math.round(Math.pow(((circleSize(d)-10)/3),2)))
 								.style("left", (d3.event.pageX) + "px")
 								.style("top", (d3.event.pageY - 35) + "px");
 				})
