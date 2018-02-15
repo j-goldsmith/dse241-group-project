@@ -96,12 +96,9 @@ div.tooltip {
 }
 .link {
     stroke: #999;
-    stroke-opacity: .6;
-}
-
-html, body {
-    width: 900px;
-    height: 700px;
+    color: #999;
+    fill: #999;
+    opacity: .6;
 }
 
 h3 {
@@ -125,8 +122,8 @@ div.tooltip {
   float: left;
 }
 
-#element1 {margin-left:10px;margin-right:10px; width:500px;} 
-#graph {display:inline-block; width:600px;margin-left:20px} 
+
+#graph {}
 
 .ticks {
       font-size: 10px;
