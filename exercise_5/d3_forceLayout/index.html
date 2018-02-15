@@ -15,417 +15,457 @@
     <link type="text/css" rel="stylesheet" href="css/viz.css"  />
 
 </head>
-<body>
-<div style="margin:auto;width:600px;text-align: center;padding:20px">
-    <h3 >BIGHORN SHEEP DOMINANCE</h3>
-    <div id="element1">
-    This data shows the confrontational interactions between 28 female bighorn sheep observed on the National Bison Range in 1984.
-    Each node is a sheep with a unique ID, color-filled by age.
-    The weight of the connections shows the number of interactions between two sheep. Click on a sheep to highlight its interactions.
+
+<div style="margin:auto;width:1500px">
+    <div id="graph" style="width:900px;float:left;padding:20px;"></div>
+    <div style="margin-top:100px;width:600px;text-align: center;padding:20px;float:left;">
+        <h3 >BIGHORN SHEEP DOMINANCE</h3>
+        <div id="element1">
+        This data shows the confrontational interactions between 28 female bighorn sheep observed on the National Bison Range in 1984.
+        Each circle is a sheep with a unique ID, color-filled by age. The bigger a circle, the more confrontations a sheep won.
+        The weight of the connections shows the number of interactions between individual sheep. Click on a sheep to highlight confrontations it won, double click on a sheep to highlight the ones it lost.
+        </div>
+        <svg id="legendContainer"></svg>
     </div>
 </div>
-<div id="graph" style="margin:auto;width:900px;">
-    <script type="application/javascript">
-        d3.queue()
-            //.defer(d3.json, "data/sheep_age.json")
-            //.defer(d3.json, "data/sheep_edges1.json")
-			.defer(d3.json,"data/sheeps.json")
-            .await(init);
 
-      /*  function init(error, nodes, edges) {
-            if(error) { console.log(error); }
+<script type="application/javascript">
+    d3.queue()
+        //.defer(d3.json, "data/sheep_age.json")
+        //.defer(d3.json, "data/sheep_edges1.json")
+        .defer(d3.json,"data/sheeps.json")
+        .await(init);
 
-            d3.select("body")
-                .datum({
-                    'nodes':nodes,
-                    'edges':edges
-                })
-                .call(viz());
-        }*/
-		var width = 900,
-            height = 800;
-			
-		//h = 500 - margin.t - margin.b;
-        var svg = d3.select("#graph").append("svg")
-            .attr("width", width)
-            .attr("height", height); 
-		
-		//Start tooltip code	
-		var div = d3.select("#graph").append("div")
-					.attr("class", "tooltip")
-					.style("opacity", 0);
-		//End tooltip code
-		
-		/*svg.append("defs").append("marker")
-    .attr("id", "arrow")
-    .attr("viewBox", "0 -5 10 10")
-    .attr("refX", 25)
-    .attr("refY", 0)
-    .attr("markerWidth", 4)
-    .attr("markerHeight", 4)
-    .attr("orient", "auto")
-    .append("svg:path")
-    .attr("d", "M0,-5L10,0L0,5");*/
-	
-	/*svg.append("defs").selectAll("marker")
-    .data(["suit", "licensing", "resolved"])
-  .enter().append("marker")
-    .attr("id", function(d) { return d; })
-    .attr("viewBox", "0 -5 10 10")
-    .attr("refX", 25)
-    .attr("refY", 0)
-    .attr("markerWidth", 6)
-    .attr("markerHeight", 6)
-    .attr("orient", "auto")
-  .append("path")
-    .attr("d", "M0,-5L10,0L0,5 L10,0 L0, -5")
-    .style("stroke", "#4679BD")
-    .style("opacity", "0.6");*/
+  /*  function init(error, nodes, edges) {
+        if(error) { console.log(error); }
+
+        d3.select("body")
+            .datum({
+                'nodes':nodes,
+                'edges':edges
+            })
+            .call(viz());
+    }*/
+    var width = 900,
+        height = 800;
+
+    //h = 500 - margin.t - margin.b;
+    var svg = d3.select("#graph").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    //Start tooltip code
+    var div = d3.select("#graph").append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0);
+    //End tooltip code
+
+    /*svg.append("defs").append("marker")
+.attr("id", "arrow")
+.attr("viewBox", "0 -5 10 10")
+.attr("refX", 25)
+.attr("refY", 0)
+.attr("markerWidth", 4)
+.attr("markerHeight", 4)
+.attr("orient", "auto")
+.append("svg:path")
+.attr("d", "M0,-5L10,0L0,5");*/
+
+/*svg.append("defs").selectAll("marker")
+.data(["suit", "licensing", "resolved"])
+.enter().append("marker")
+.attr("id", function(d) { return d; })
+.attr("viewBox", "0 -5 10 10")
+.attr("refX", 25)
+.attr("refY", 0)
+.attr("markerWidth", 6)
+.attr("markerHeight", 6)
+.attr("orient", "auto")
+.append("path")
+.attr("d", "M0,-5L10,0L0,5 L10,0 L0, -5")
+.style("stroke", "#4679BD")
+.style("opacity", "0.6");*/
 
 
-        /*var color = function (group) {
-            if (group == 1) {
-                return "#aaa"
-            } else if (group == 2) {
-                return "#fbc280"
-            } else {
-                return "#405275"
-            }
-        }*/ 
-		
-		var simulation = d3.forceSimulation() 
-            .force("charge", d3.forceManyBody().strength(-700)) 
-            .force("link", d3.forceLink().id(function(d) {return d.id;})) 
-            .force("center", d3.forceCenter(width / 2, (height) / 2))
-            //.force("y", d3.forceY(0.001))
-            //.force("x", d3.forceX(0.001));
-		
-		var colorp = d3.scaleOrdinal([
-        '#ffffd9',
-        '#edf8b1',
-        '#c7e9b4',
-        '#7fcdbb',
-        '#41b6c4',
-        '#1d91c0',
-        '#225ea8',
-        '#253494',
-        '#081d58'
-        ]).domain([1,2,3,4,5,6,7,8,9]); // D3 Version 4
-		
-        function dragstarted(d) {
-            if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
+    /*var color = function (group) {
+        if (group == 1) {
+            return "#aaa"
+        } else if (group == 2) {
+            return "#fbc280"
+        } else {
+            return "#405275"
         }
-        
-        function dragged(d) {
-            d.fx = d3.event.x;
-            d.fy = d3.event.y;
-        }
-        
-        function dragended(d) {
-            if (!d3.event.active) simulation.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
-        } 
-		
-		
-        function init(error, json) {
-            if(error) { console.log(error); }
-			
-			//console.log(json.nodes);
-			//console.log(json.links);
-			
-            simulation
-                .nodes(json.nodes) 
-                .force("link").links(json.links);	
-				
-            var link = svg.selectAll(".link")
-                .data(json.links)
-                .enter()
-                .append("line")
-                .attr("class", "link")
-				.attr("stroke-width", function (d) {
-                    return ((d.weight)/3);
-                })
-				//.style("marker-end",  "url(#suit)"); // Modified line
-				//.attr('marker-end','url(#arrow)');
+    }*/
 
-            var node = svg.selectAll(".node")
-                .data(json.nodes)
-                .enter().append("g")
-                .attr("class", "node")
-                .call(d3.drag()
-                .on("start", dragstarted)
-                .on("drag", dragged)
-                .on("end", dragended)
-				);  
+    var simulation = d3.forceSimulation()
+        .force("charge", d3.forceManyBody().strength(-700))
+        .force("link", d3.forceLink().id(function(d) {return d.id;}))
+        .force("center", d3.forceCenter(width / 2, (height) / 2))
+        //.force("y", d3.forceY(0.001))
+        //.force("x", d3.forceX(0.001));
 
-            node.append('circle')
-                .attr('r', circleSize)
-				//function(d) {return d3.sum(d3.forceLink().filter(function(p) {return p.target== d}), function(p) {return p.weight})})
-                .attr('fill', function (d) {
-                    return colorp(d.age);
-                })
-			
-			function circleSize(d){
-					var nodeweight = {};
-					for (i = 0; i < json.nodes.length; i++) {
-								nodeweight[i] = 1;	
-					};
-					json.links.forEach(function (l) {
-								nodeweight[l.source.index] = nodeweight[l.source.index]+l.weight;
-					});
-					console.log(nodeweight);
-					console.log(nodeweight[d.index]);
-					return (Math.sqrt(nodeweight[d.index])*3+10)}
-			
-            node.append("text")
-               /* .attr("dx", function(d){
-                    return d.id > 9 ? -6 : -3;
-                })
-                .attr("dy", function(d){
-                    return d.id > 9 ? 6 : 3;
-                })*/
-                .attr("x", 0)
-                .attr("dy", ".35em")
-                .attr("text-anchor", "middle")
-                .style("stroke",function(d){ return d.age > 5 ? "#ffffd9" : "#081d58"})
-                .style("font-family", "overwatch")
-                .style("font-size", "14px")
-				.text(function (d) {
-                    return d.id
-                })
-				//Start tooltip code
-				.on("mouseover", function(d) {
-							div.transition()
-							   .duration(20)
-							   .style("opacity", 1);
-							div.html("ID:"+  d.id + "<br />Age: "+d.age + "<br />Aggression: " + Math.round(Math.pow(((circleSize(d)-10)/3),2)))
-								.style("left", (d3.event.pageX) + "px")
-								.style("top", (d3.event.pageY - 35) + "px");
-				})
-				.on("mouseout", function(d) {
-							div.transition()
-								.duration(500)
-								.style("opacity", 0);
-				});
-				//End tooltip code
-				
-			link
-				//Start tooltip code
-				.on("mouseover", function(d) {
-							div.transition()
-							   .duration(200)
-							   .style("opacity", 1);
-							div.html("Weight:"+  d.weight)
-								.style("left", (d3.event.pageX) + "px")
-								.style("top", (d3.event.pageY - 35) + "px");
-				})
-				.on("mouseout", function(d) {
-							div.transition()
-								.duration(500)
-								.style("opacity", 0);
-				});
-				//End tooltip code
+    var colorp = d3.scaleOrdinal([
+    '#ffffd9',
+    '#edf8b1',
+    '#c7e9b4',
+    '#7fcdbb',
+    '#41b6c4',
+    '#1d91c0',
+    '#225ea8',
+    '#253494',
+    '#081d58'
+    ]).domain([1,2,3,4,5,6,7,8,9]); // D3 Version 4
 
-            simulation.on("tick", function () {
-                link.attr("x1", function (d) {
-                        return d.source.x;
-                    })
-                    .attr("y1", function (d) {
-                        return d.source.y;
-                    })
-                    .attr("x2", function (d) {
-                        return d.target.x;
-                    })
-                    .attr("y2", function (d) {
-                        return d.target.y;
-                    });
-                node.attr("transform", function (d) {
-                    return "translate(" + d.x + "," + d.y + ")";
+    function dragstarted(d) {
+        if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+    }
+
+    function dragged(d) {
+        d.fx = d3.event.x;
+        d.fy = d3.event.y;
+    }
+
+    function dragended(d) {
+        if (!d3.event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+    }
+
+
+    function init(error, json) {
+        if(error) { console.log(error); }
+
+        //console.log(json.nodes);
+        //console.log(json.links);
+
+        simulation
+            .nodes(json.nodes)
+            .force("link").links(json.links);
+
+        var link = svg.selectAll(".link")
+            .data(json.links)
+            .enter()
+            .append("line")
+            .attr("class", "link")
+            .attr("stroke-width", function (d) {
+                return ((d.weight)/3);
+            })
+            //.style("marker-end",  "url(#suit)"); // Modified line
+            //.attr('marker-end','url(#arrow)');
+
+        var node = svg.selectAll(".node")
+            .data(json.nodes)
+            .enter().append("g")
+            .attr("class", "node")
+            .call(d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended)
+            );
+
+        node.append('circle')
+            .attr('r', circleSize)
+            //function(d) {return d3.sum(d3.forceLink().filter(function(p) {return p.target== d}), function(p) {return p.weight})})
+            .attr('fill', function (d) {
+                return colorp(d.age);
+            })
+
+        function circleSize(d){
+                var nodeweight = {};
+                for (i = 0; i < json.nodes.length; i++) {
+                            nodeweight[i] = 1;
+                };
+                json.links.forEach(function (l) {
+                        if(l.source.index != d.index){
+                            return;
+                        }
+                        nodeweight[l.source.index] = nodeweight[l.source.index]+l.weight;
                 });
+                console.log(nodeweight);
+                console.log(nodeweight[d.index]);
+                return (Math.sqrt(nodeweight[d.index])*3+10)}
+
+        node.append("text")
+           /* .attr("dx", function(d){
+                return d.id > 9 ? -6 : -3;
+            })
+            .attr("dy", function(d){
+                return d.id > 9 ? 6 : 3;
+            })*/
+            .attr("x", 0)
+            .attr("dy", ".35em")
+            .attr("text-anchor", "middle")
+            .style("stroke",function(d){ return d.age > 5 ? "#ffffd9" : "#081d58"})
+            .style("font-family", "overwatch")
+            .style("font-size", "14px")
+            .text(function (d) {
+                return d.id
+            })
+            //Start tooltip code
+            .on("mouseover", function(d) {
+                        div.transition()
+                           .duration(20)
+                           .style("opacity", 1);
+                        div.html("ID:"+  d.id + "<br />Age: "+d.age + "<br />Aggression: " + Math.round(Math.pow(((circleSize(d)-10)/3),2)))
+                            .style("left", (d3.event.pageX) + "px")
+                            .style("top", (d3.event.pageY - 35) + "px");
+            })
+            .on("mouseout", function(d) {
+                        div.transition()
+                            .duration(500)
+                            .style("opacity", 0);
             });
-		
-		//Start code node selection
-		//Toggle stores whether the highlighting is on
-		var toggle = 0;
-		//Create an array logging what is connected to what
-		var linkedByIndex = {};
-		for (i = 0; i < json.nodes.length; i++) {
-			linkedByIndex[i + "," + i] = 1;	
-		};
-		json.links.forEach(function (d) {
-				linkedByIndex[d.source.index + "," + d.target.index] = 1;
-		});
-		//This function looks up whether a pair are neighbours
-		function neighboring(a, b) {
-				return linkedByIndex[a.index + "," + b.index];
-		}
-		//Function to show only target nodes of current node
-		function connectedNodes() {
-				if (toggle == 0) {
-				//Reduce the opacity of all but the neighbouring nodes
-				d = d3.select(this).node().__data__;
-				node.style("opacity", function (o) {
-				//return neighboring(d, o) | neighboring(o, d) ? 1 : 0.1;
-				return neighboring(d, o) ? 1 : 0.1;
-				});
-				link.style("opacity", function (o) {
-						//return d.index==o.source.index | d.index==o.target.index ? 1 : 0.1;
-						return d.index==o.source.index ? 1 : 0.1;
-				});
-				//Reduce the op
-				toggle = 1;
-				} else {
-				//Put them back to opacity=1
-				node.style("opacity", 1);
-				link.style("opacity", 1);
-				toggle = 0;
-				}
-		}
-		//Function to show all connected nodes
-		function AllconnectedNodes() {
-				if (toggle == 0) {
-				//Reduce the opacity of all but the neighbouring nodes
-				d = d3.select(this).node().__data__;
-				node.style("opacity", function (o) {
-				return neighboring(o, d) ? 1 : 0.1;
-				//return neighboring(d, o) ? 1 : 0.1;
-				});
-				link.style("opacity", function (o) {
-						return d.index==o.target.index ? 1 : 0.1;
-						//return d.index==o.source.index ? 1 : 0.1;
-				});
-				//Reduce the op
-				toggle = 1;
-				} else {
-				//Put them back to opacity=1
-				node.style("opacity", 1);
-				link.style("opacity", 1);
-				toggle = 0;
-				}
-		}
-		
-		node.on('click', connectedNodes) //Added code 
-		.on('dblclick',AllconnectedNodes)
-		//End code for node selection
-		
-		//Legend code
-		//Append a defs (for definition) element to your SVG
+            //End tooltip code
 
-            var legend = svg.append("g")
-                .attr("class", "legendOrdinal")
-                .attr("transform", "translate(240,50)");
+        link
+            //Start tooltip code
+            .on("mouseover", function(d) {
+                        div.transition()
+                           .duration(200)
+                           .style("opacity", 1);
+                        div.html("Weight:"+  d.weight)
+                            .style("left", (d3.event.pageX) + "px")
+                            .style("top", (d3.event.pageY - 35) + "px");
+            })
+            .on("mouseout", function(d) {
+                        div.transition()
+                            .duration(500)
+                            .style("opacity", 0);
+            });
+            //End tooltip code
 
-		    legend.append('text')
-                .html('Age in Years')
-                .attr("transform", "translate(164,-10)")
-                .attr('style','font-weight:bold;font-size:16px;')
+        simulation.on("tick", function () {
+            link.attr("x1", function (d) {
+                    return d.source.x;
+                })
+                .attr("y1", function (d) {
+                    return d.source.y;
+                })
+                .attr("x2", function (d) {
+                    return d.target.x;
+                })
+                .attr("y2", function (d) {
+                    return d.target.y;
+                });
+            node.attr("transform", function (d) {
+                return "translate(" + d.x + "," + d.y + ")";
+            });
+        });
 
-            var legendOrdinal = d3.legendColor()
-                .orient("horizontal")
-                .labels([1,2,3,4,5,6,7,8,'9+'])
-                .shapeWidth(45)
-                .shapeHeight(20)
-                .scale(colorp);
+    //Start code node selection
+    //Toggle stores whether the highlighting is on
+    var toggle = 0;
+    //Create an array logging what is connected to what
+    var linkedByIndex = {};
+    for (i = 0; i < json.nodes.length; i++) {
+        linkedByIndex[i + "," + i] = 1;
+    };
+    json.links.forEach(function (d) {
+            linkedByIndex[d.source.index + "," + d.target.index] = 1;
+    });
+    //This function looks up whether a pair are neighbours
+    function neighboring(a, b) {
+            return linkedByIndex[a.index + "," + b.index];
+    }
+    //Function to show only target nodes of current node
+    function connectedNodes() {
+            if (toggle == 0) {
+            //Reduce the opacity of all but the neighbouring nodes
+            d = d3.select(this).node().__data__;
+            node.style("opacity", function (o) {
+            //return neighboring(d, o) | neighboring(o, d) ? 1 : 0.1;
+            return neighboring(d, o) ? 1 : 0.1;
+            });
+            link.style("opacity", function (o) {
+                    //return d.index==o.source.index | d.index==o.target.index ? 1 : 0.1;
+                    return d.index==o.source.index ? 1 : 0.1;
+            });
+            //Reduce the op
+            toggle = 1;
+            } else {
+            //Put them back to opacity=1
+            node.style("opacity", 1);
+            link.style("opacity", 1);
+            toggle = 0;
+            }
+    }
+    //Function to show all connected nodes
+    function AllconnectedNodes() {
+            if (toggle == 0) {
+            //Reduce the opacity of all but the neighbouring nodes
+            d = d3.select(this).node().__data__;
+            node.style("opacity", function (o) {
+            return neighboring(o, d) ? 1 : 0.1;
+            //return neighboring(d, o) ? 1 : 0.1;
+            });
+            link.style("opacity", function (o) {
+                    return d.index==o.target.index ? 1 : 0.1;
+                    //return d.index==o.source.index ? 1 : 0.1;
+            });
+            //Reduce the op
+            toggle = 1;
+            } else {
+            //Put them back to opacity=1
+            node.style("opacity", 1);
+            link.style("opacity", 1);
+            toggle = 0;
+            }
+    }
 
-            svg.select(".legendOrdinal")
-                .call(legendOrdinal);
-		  
-		    var edgel = svg.append('g')
-                .attr('class','edgeLegend')
-                .attr("transform", "translate(289,125)");;
+    node.on('click', connectedNodes) //Added code
+    .on('dblclick',AllconnectedNodes)
+    //End code for node selection
 
-            edgel.append('text')
-                .html('Confrontation Frequency')
-                .attr("transform", "translate(66,0)")
-                .attr('style','font-weight:bold;font-size:16px;')
-            edgel.selectAll('rect')
-                .data([1,2,3,4,5,6,7,8,9,10,11,12])
-                .enter()
-                .append('rect')
-                .attr('width','25')
-                .attr('height',function(w){ return w/3; })
-                .attr("transform", function(d,i){ return "translate("+ ((i*27)) +",20)";} )
-                .attr('class','link');
-            edgel.append('text')
-                .html('less')
-                .attr("transform", "translate(0,38)")
-                .attr('class','link')
-                .attr('style','font-size:14px;')
-            edgel.append('text')
-                .html('more')
-                .attr("transform", "translate(286,38)")
-                .attr('class','link')
-                .attr('style','font-size:14px;')
-		//Slider code
-	/*	var margin = {top:0, right:50, bottom:0, left:50};
-		width = 800;
-		height = 70;
+    //Legend code
+    //Append a defs (for definition) element to your SVG
+
+        var legendContainer =  d3.select('#legendContainer')
+            .attr('height',600)
+            .attr('width',600);
+
+        var legend = legendContainer
+            .append("g")
+            .attr("class", "legendOrdinal")
+            .attr("transform", "translate(85,45)");
+
+        legend.append('text')
+            .html('Age in Years')
+            .attr("transform", "translate(168,-10)")
+            .attr('style','font-weight:bold;font-size:16px;')
+
+        var legendOrdinal = d3.legendColor()
+            .orient("horizontal")
+            .labels([1,2,3,4,5,6,7,8,'9+'])
+            .shapeWidth(45)
+            .shapeHeight(20)
+            .scale(colorp);
+
+        legendContainer.select(".legendOrdinal")
+            .call(legendOrdinal);
+
+        var edgel = legendContainer.append('g')
+            .attr('class','edgeLegend')
+            .attr("transform", "translate(139,150)");;
+
+        edgel.append('text')
+            .html('Confrontation Frequency')
+            .attr("transform", "translate(66,0)")
+            .attr('style','font-weight:bold;font-size:16px;')
+        edgel.selectAll('rect')
+            .data([1,2,3,4,5,6,7,8,9,10,11,12])
+            .enter()
+            .append('rect')
+            .attr('width','25')
+            .attr('height',function(w){ return w/3; })
+            .attr("transform", function(d,i){ return "translate("+ ((i*27)) +",20)";} )
+            .attr('class','link');
+        edgel.append('text')
+            .html('less')
+            .attr("transform", "translate(0,38)")
+            .attr('class','link')
+            .attr('style','font-size:14px;')
+        edgel.append('text')
+            .html('more')
+            .attr("transform", "translate(286,38)")
+            .attr('class','link')
+            .attr('style','font-size:14px;');
+
+        var aggression = legendContainer.append('g')
+            .attr('class','aggressionLegend')
+            .attr("transform", "translate(136,240)");
+
+        aggression.append('text')
+            .html('Dominance')
+            .attr("transform", "translate(117,0)")
+            .attr('style','font-weight:bold;font-size:16px;')
+        aggression.selectAll('circle')
+            .data([1,17,33,49,65])
+            .enter()
+            .append('circle')
+            .attr('r',function(d){
+                return Math.sqrt(d)*3+10;
+            })
+            .attr("transform", function(d,i){ return "translate("+ ((i*75)+10) +",60)";} )
+            .attr('class','link');
+        aggression.append('text')
+            .html('less')
+            .attr("transform", "translate(0,120)")
+            .attr('class','link')
+            .attr('style','font-size:14px;')
+        aggression.append('text')
+            .html('more')
+            .attr("transform", "translate(285,120)")
+            .attr('class','link')
+            .attr('style','font-size:14px;');
+    //Slider code
+/*	var margin = {top:0, right:50, bottom:0, left:50};
+    width = 800;
+    height = 70;
 var svgSlider = d3.select("#slider")
-    .append("svg")
-    .attr("width", width)
-    .attr("height", height);
-    
+.append("svg")
+.attr("width", width)
+.attr("height", height);
+
 var x = d3.scaleLinear()
-    .domain([0,1,2,3,4,5,6,7,8,9,10])
-    .range([0, width]);
-    //.clamp(true);
+.domain([0,1,2,3,4,5,6,7,8,9,10])
+.range([0, width]);
+//.clamp(true);
 
 var slider = svgSlider.append("g")
-    .attr("class", "slider")
-    .attr("transform", "translate(" + margin.left + "," + height / 2 + ")");
+.attr("class", "slider")
+.attr("transform", "translate(" + margin.left + "," + height / 2 + ")");
 
 slider.append("line")
-    .attr("class", "track")
-    .attr("x1", x.range()[0])
-    .attr("x2", x.range()[1])
-  .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
-    .attr("class", "track-inset")
-  .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
-    .attr("class", "track-overlay")
-    .call(d3.drag()
-        .on("start.interrupt", function() { slider.interrupt(); })
-        .on("start drag", function() { update(x.invert(d3.event.x)); }));
+.attr("class", "track")
+.attr("x1", x.range()[0])
+.attr("x2", x.range()[1])
+.select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+.attr("class", "track-inset")
+.select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+.attr("class", "track-overlay")
+.call(d3.drag()
+    .on("start.interrupt", function() { slider.interrupt(); })
+    .on("start drag", function() { update(x.invert(d3.event.x)); }));
 
 slider.insert("g", ".track-overlay")
-    .attr("class", "ticks")
-    .attr("transform", "translate(0," + 18 + ")")
-  .selectAll("text")
-    .data(x.ticks(10))
-    .enter()
-    .append("text")
-    .attr("x", x)
-    .attr("y", 10)
-    .attr("text-anchor", "middle")
-    .text(function(d) { return d; });
+.attr("class", "ticks")
+.attr("transform", "translate(0," + 18 + ")")
+.selectAll("text")
+.data(x.ticks(10))
+.enter()
+.append("text")
+.attr("x", x)
+.attr("y", 10)
+.attr("text-anchor", "middle")
+.text(function(d) { return d; });
 
 var handle = slider.insert("circle", ".track-overlay")
-    .attr("class", "handle")
-    .attr("r", 9);
+.attr("class", "handle")
+.attr("r", 9);
 
 var label = slider.append("text")  
-    .attr("class", "label")
-    .attr("text-anchor", "middle")
-    .text(0)
-    .attr("transform", "translate(0," + (-25) + ")");
-	
-	function update(h) {
-  // update position and text of label according to slider scale
-  handle.attr("cx", x(h));
-  label
-    .attr("x", x(h))
-    .text(h);
+.attr("class", "label")
+.attr("text-anchor", "middle")
+.text(0)
+.attr("transform", "translate(0," + (-25) + ")");
 
-  // filter data set and redraw plot
-  var newData = json.nodes.filter(function(d) {
-    return d.age < h;
-  })
-  init(error,newData);
+function update(h) {
+// update position and text of label according to slider scale
+handle.attr("cx", x(h));
+label
+.attr("x", x(h))
+.text(h);
+
+// filter data set and redraw plot
+var newData = json.nodes.filter(function(d) {
+return d.age < h;
+})
+init(error,newData);
 }*/
-		}
-    </script>
-</div>
+    }
+</script>
+
 </body>
 </html>
