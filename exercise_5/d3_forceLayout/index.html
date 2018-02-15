@@ -162,13 +162,27 @@
 				);  
 
             node.append('circle')
-                .attr('r', function (d) {
-                    return 20;//(d.degree);
-                })
+                .attr('r', circleSize)
+				//function(d) {return d3.sum(d3.forceLink().filter(function(p) {return p.target== d}), function(p) {return p.weight})})
                 .attr('fill', function (d) {
                     return colorp(d.age);
                 })
-
+			
+			function circleSize(d){
+					var nodeweight = {};
+					for (i = 0; i < json.nodes.length; i++) {
+								nodeweight[i] = 1;	
+					};
+					json.links.forEach(function (l) {
+								nodeweight[l.target.index] = nodeweight[l.target.index]+l.weight;
+					});
+					console.log(nodeweight);
+					console.log(nodeweight[d.index]);
+					//if (nodeweight[d.index] < 10) {return 15;}
+					//else {return nodeweight[d.index]}
+					return (Math.sqrt(nodeweight[d.index])*3+10)}
+					//return nodeweight[d.index]};
+			
             node.append("text")
                /* .attr("dx", function(d){
                     return d.id > 9 ? -6 : -3;
@@ -295,7 +309,7 @@
 				toggle = 0;
 				}
 		}
-
+		
 		node.on('click', connectedNodes) //Added code 
 		.on('dblclick',AllconnectedNodes)
 		//End code for node selection
