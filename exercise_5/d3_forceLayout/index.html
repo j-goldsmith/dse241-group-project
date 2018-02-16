@@ -150,6 +150,23 @@
             .append("line")
             .attr("class", "link")
             .attr("stroke-width", function (d) {
+                switch(d.weight){
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                        return 1;
+                    case 5:
+                    case 6:
+                    case 7:
+                    case 8:
+                        return 3;
+                    case 9:
+                    case 10:
+                    case 11:
+                    case 12:
+                        return 5;
+                }
                 return ((d.weight)/3);
             })
             //.style("marker-end",  "url(#suit)"); // Modified line
@@ -208,7 +225,7 @@
                         div.transition()
                            .duration(20)
                            .style("opacity", 1);
-                        div.html("ID:"+  d.id + "<br />Age: "+d.age + "<br />Aggression: " + Math.round(Math.pow(((circleSize(d)-10)/3),2)))
+                        div.html("ID:"+  d.id + "<br />Age: "+d.age + "<br />Dominance: " + Math.round(Math.pow(((circleSize(d)-10)/3),2)))
                             .style("left", (d3.event.pageX) + "px")
                             .style("top", (d3.event.pageY - 35) + "px");
             })
@@ -354,12 +371,12 @@
             .attr("transform", "translate(66,0)")
             .attr('style','font-weight:bold;font-size:16px;')
         edgel.selectAll('rect')
-            .data([1,2,3,4,5,6,7,8,9,10,11,12])
+            .data([1,4,7])
             .enter()
             .append('rect')
-            .attr('width','25')
-            .attr('height',function(w){ return w/3; })
-            .attr("transform", function(d,i){ return "translate("+ ((i*27)) +",20)";} )
+            .attr('width','106')
+            .attr('height',function(w){ return w; })
+            .attr("transform", function(d,i){ return "translate("+ ((i*108)) +",20)";} )
             .attr('class','link');
         edgel.append('text')
             .html('less')
