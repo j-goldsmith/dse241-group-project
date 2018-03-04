@@ -8,10 +8,9 @@
 
     <!link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
 
-    <!script type="application/javascript" src="js/underscore-min.js"><!/script>
-	<!script type="application/javascript" src="js/viz.js"><!/script>
     <script type="application/javascript" src="https://d3js.org/d3.v4.min.js"></script>
     <script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.5/d3-legend.js"></script>
+	<script type="application/javascript" src="https://d3js.org/topojson.v2.min.js"></script>
 
     <link type="text/css" rel="stylesheet" href="css/bootstrap.min.css">
     <link type="text/css" rel="stylesheet" href="css/viz.css"  />
@@ -22,18 +21,16 @@
         <div id="element1">
 		The H1B visa classification permits a foreign national to work in the United States for a temporary period. It is available for offers of employment that are in a specialty occupation*. A person may hold H1B status for a maximum of six years, and it may be issued in increments of up to three years by the USCIS. An employee may receive extensions of H1B status beyond six years in certain circumstances, if s/he is in the process of applying for employment-based permanent residence (commonly referred to as the “green card”). H1B visas are numerically limited, with a total of 85,000 visas available each fiscal year (20,000 of these visas are restricted to individuals who have received master’s degrees or higher from U.S colleges or universities). This limitation is referred to as the H1B cap.
         </div>
-        <!svg id="legendContainer"><!/svg>
 </div>
 </br></br></br>
 <div style="margin:auto;width:1500px">
 	<div style="margin-top:100px;width:900px;text-align: center;float:left;">
-        <h3 >Labor Condition Application</h3>
+        <h4>Labor Condition Application</h4>
         <div id="element1">
 		The Labor Condition Application (LCA) is a form employers must file with the United States Department of Labor Employment and Training Administration (ETA) on behalf of employees applying for a nonimmigrant H-1B, H-1B1 (Singapore and Chile) or E-3 (Australia) work visa.
 		Employers submit Form ETA 9035/9035E to apply. If approved, the LCA is valid for up to three years of employment (two years for E-3).
 		<p><b>This dataset contains all the LCAs filed with USCIS from Oct,2016 to Sep,2017. The number on the right is the total number of LCAs filed in the given period.</b></p>
         </div>
-        <!svg id="legendContainer"><!/svg>
     </div>
     <div width="600" height="400" style="float:left;margin-left:180px;margin-top:130px;color: #6F257F">
 		<h1><pre id="LCACount" style="color: #6F257F;font-size:250%;">517324</pre></h1>
@@ -41,33 +38,52 @@
 </div>
 </br></br></br></br></br></br></br></br></br></br></br></br></br></br></br></br></br></br></br></br>
 <div style="margin:auto;width:1500px">
-    <svg width="800" height="400" style="float:left;"></svg>
-    <div style="margin-left:80px;margin-top:100px;width:600px;text-align: center;float:left;">
-        <h3 >BIGHORN SHEEP DOMINANCE</h3>
+    <div id="StatusCount" width="800" height="400" style="float:left;"></div>
+    <div style="margin-left:240px;margin-top:100px;width:600px;text-align: center;float:left;">
+        <h4>CASE STATUS</h4>
         <div id="element1">
-        This data shows the confrontational interactions between 28 female bighorn sheep observed on the National Bison Range in 1984.
-        Each circle is a sheep with a unique ID, color-filled by age. The bigger a circle, the more confrontations a sheep won.
-        The weight of the connections shows the number of interactions between individual sheep. Click on a sheep to highlight confrontations it won, double click on a sheep to highlight the ones it lost.
+        Based on the bar chart, it can be said that most of the LCA applications are approved. 87.4% of the LCAs filed in 2017 were Certified. Out of more than 500,000 cases only ~6000 cases were denied.
         </div>
-        <!svg id="legendContainer"><!/svg>
+    </div>
+</div>
+</br></br></br></br></br></br></br></br></br></br></br></br></br></br></br></br></br></br></br></br></br></br></br></br>
+<div style="margin:auto;width:1500px">
+    <div id="StateMap" width="1000" height="600" style="float:left;"></div>
+    <div style="margin-left:100px;margin-top:100px;width:300px;text-align: center;float:left;">
+        <h4>CASE STATUS</h4>
+        <div id="element1">
+        Based on the bar chart, it can be said that most of the LCA applications are approved. 87.4% of the LCAs filed in 2017 were Certified. Out of more than 500,000 cases only ~6000 cases were denied.
+        </div>
     </div>
 </div>
 <script>
-var svg = d3.select("svg"),
-    margin = {top: 20, right: 20, bottom: 30, left: 140},
-    width = +svg.attr("width") - margin.left - margin.right,
-    height = +svg.attr("height") - margin.top - margin.bottom;
+ var  margin = {top: 20, right: 20, bottom: 30, left: 140},
+    width = +800 - margin.left - margin.right,
+    height = +400 - margin.top - margin.bottom;
+
+var svg1 = d3.select("#StatusCount").append("svg")
+			.attr("width",width)
+			.attr("height",height);
   
 var tooltip = d3.select("body").append("div").attr("class", "toolTip");
   
 var x = d3.scaleLinear().range([0, width]);
 var y = d3.scaleBand().range([height, 0]);
 
-var g = svg.append("g")
+var g = svg1.append("g")
 		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		
+mapwidth = 1000;
+mapheight = 600;
+ 
+var svgMap = d3.select("#StateMap").append("svg")
+				.attr("width",mapwidth)
+				.attr("height",mapheight);
   
 d3.csv("data/H1B.csv", function(error, data) {
   	if (error) throw error;
+	
+	
   
     var statusCount = d3.nest()
 						  .key(function(d) { return d.CASE_STATUS; })
@@ -126,5 +142,22 @@ function animateValue(id, start, end, duration) {
 }
 
 animateValue("LCACount", 0,517324, 20000);
+
+var path = d3.geoPath();
+
+d3.json("https://d3js.org/us-10m.v1.json", function(error, us) {
+  if (error) throw error;
+
+  svgMap.append("g")
+      .attr("class", "states")
+    .selectAll("path")
+    .data(topojson.feature(us, us.objects.states).features)
+    .enter().append("path")
+      .attr("d", path);
+
+  svgMap.append("path")
+      .attr("class", "state-borders")
+      .attr("d", path(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; })));
+});
 </script>
 </body>
