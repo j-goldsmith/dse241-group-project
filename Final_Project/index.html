@@ -50,9 +50,9 @@
 <div style="margin:auto;width:1500px">
     <div id="StateMap" width="1000" height="600" style="float:left;"></div>
     <div style="margin-left:100px;margin-top:100px;width:300px;text-align: center;float:left;">
-        <h4>CASE STATUS</h4>
+        <h4>State Distribution</h4>
         <div id="element1">
-        Based on the bar chart, it can be said that most of the LCA applications are approved. 87.4% of the LCAs filed in 2017 were Certified. Out of more than 500,000 cases only ~6000 cases were denied.
+        The geoviz on the left shows the distribution of cases filed across all the states. Color gradient is used to represent the number of cases by state. Darker the state, more cases were filed from that state. For example, California and Texas have a huge chunk of the total cases filed.
         </div>
     </div>
 </div>
@@ -79,17 +79,38 @@ mapheight = 600;
 var svgMap = d3.select("#StateMap").append("svg")
 				.attr("width",mapwidth)
 				.attr("height",mapheight);
-  
-d3.csv("data/H1B.csv", function(error, data) {
+				
+d3.queue()
+    .defer(d3.json, "https://d3js.org/us-10m.v1.json")
+    .defer(d3.csv, "data/H1B.csv")
+	.defer(d3.tsv,"data/us-state-names.tsv")
+    .await(ready);
+ 
+var path = d3.geoPath();
+
+/*var color = d3.scaleThreshold()
+    .domain([0.02, 0.04, 0.06, 0.08, 0.10])
+    .range(["#f2f0f7", "#dadaeb", "#bcbddc", "#9e9ac8", "#756bb1", "#54278f"]);*/
+	
+var color = d3.scaleLinear().domain([1,88000]).range(["#c5a7cb",'#6F257F']);
+//console.log(color);	
+
+var names = {};
+var codes = {};
+
+//d3.csv("data/H1B.csv", function(error, data) {
+function ready(error, us, data,tsv){
   	if (error) throw error;
-	
-	
   
     var statusCount = d3.nest()
 						  .key(function(d) { return d.CASE_STATUS; })
 						  .rollup(function(v) { return v.length; })
 						  .entries(data);
-  
+	var countbystate = d3.nest()
+						 .key(function(d) { return d.EMPLOYER_STATE; })
+						 .rollup(function(v) { return v.length; })
+						  .entries(data);
+	//console.log(countbystate);
   	statusCount.sort(function(a, b) { return a.value - b.value; });
   
   	x.domain([0, d3.max(statusCount, function(d) { return d.value; })]);
@@ -98,7 +119,7 @@ d3.csv("data/H1B.csv", function(error, data) {
     g.append("g")
         .attr("class", "x axis")
        	.attr("transform", "translate(0," + height + ")")
-      	.call(d3.axisBottom(x).ticks(5).tickFormat(function(d) { console.log(d); return parseInt(d); }).tickSizeInner([-height]));
+      	.call(d3.axisBottom(x).ticks(5).tickFormat(function(d) {return parseInt(d); }).tickSizeInner([-height]));
 
     g.append("g")
         .attr("class", "y axis")
@@ -119,8 +140,72 @@ d3.csv("data/H1B.csv", function(error, data) {
               .style("display", "inline-block")
               .html((d.key) + "<br>" + (d.value));
         })
-    		.on("mouseout", function(d){ tooltip.style("display", "none");});
-});
+    	.on("mouseout", function(d){ tooltip.style("display", "none");});
+	
+	//console.log("In tsv");
+    tsv.forEach(function(d,i){
+      codes[d.id] = d.code;
+    });
+	
+	tsv.forEach(function(d,i){
+      names[d.id] = d.name;
+    });
+	
+	console.log(codes);
+	
+	stateidmap={}
+	//console.log(countbystate.length);
+	for (var i=0;i<countbystate.length;i++)
+	{
+		//console.log("in state count");
+		for(var j=0;j<Object.keys(codes).length;j++)
+		{
+			if (codes[j]==countbystate[i].key)
+			{
+				//console.log(names[j]);
+				//console.log(countbystate[i].key);
+				stateidmap[j]=countbystate[i].value;
+				//console.log(stateidmap[j]);
+			}
+		}
+	}
+	//console.log(stateidmap);
+	
+	svgMap.append("g")
+      .attr("class", "states")
+    .selectAll("path")
+    .data(topojson.feature(us, us.objects.states).features)
+    .enter().append("path")
+      .attr("d", path)
+	  .style("fill",function(d) {return color(stateidmap[parseInt(d.id)]);})
+	  .on("mousemove", function(d){
+            tooltip
+              .style("left", d3.event.pageX - 50 + "px")
+              .style("top", d3.event.pageY - 70 + "px")
+              .style("display", "inline-block")
+              .html("Total Cases" + "<br>" + (stateidmap[parseInt(d.id)]));
+        })
+      .on("mouseout", function(d){ tooltip.style("display", "none");});;
+
+    svgMap.append("path")
+      .attr("class", "state-borders")
+      .attr("d", path(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; })));
+	  
+	svgMap.selectAll("text")
+    .data(topojson.feature(us, us.objects.states).features)
+    .enter()
+    .append("svg:text")
+    .text(function(d,i) {console.log(names[parseInt(d.id)]); return names[parseInt(d.id)];})
+    .attr("x", function(d){
+        return path.centroid(d)[0];
+    })
+    .attr("y", function(d){
+        return  path.centroid(d)[1];
+    })
+    .attr("text-anchor","middle")
+    .attr('font-size','8pt')
+	.style('fill',function (d){if (stateidmap[parseInt(d.id)] > 64000) {return "White"} else {return "Black"}});
+};
 
 //Function to animate the application count
 function animateValue(id, start, end, duration) {
@@ -142,22 +227,5 @@ function animateValue(id, start, end, duration) {
 }
 
 animateValue("LCACount", 0,517324, 20000);
-
-var path = d3.geoPath();
-
-d3.json("https://d3js.org/us-10m.v1.json", function(error, us) {
-  if (error) throw error;
-
-  svgMap.append("g")
-      .attr("class", "states")
-    .selectAll("path")
-    .data(topojson.feature(us, us.objects.states).features)
-    .enter().append("path")
-      .attr("d", path);
-
-  svgMap.append("path")
-      .attr("class", "state-borders")
-      .attr("d", path(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; })));
-});
 </script>
 </body>
