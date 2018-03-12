@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Final</title>
+    <script type="application/javascript" src="js/underscore-min.js"></script>
+    <script type="application/javascript" src="js/d3.v4.min.js"></script>
+    <script type="application/javascript" src="js/topojson.js"></script>
+    <script type="application/javascript" src="https://momentjs.com/downloads/moment.min.js"></script>
+    <script type="application/javascript" src="https://d3js.org/topojson.v2.min.js"></script>
+
+    <link type="text/css" rel="stylesheet" href="h1b.css"  />
+    <script type="application/javascript" src="h1b.js"></script>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col">
+            <div class="h1b">
+                <h1 class="title">H1B Employment Opportunities</h1>
+                <svg class="map">
+                    <g class="contextPaths"></g>
+                </svg>
+                <svg class="details"></svg>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="application/javascript">
+    d3.queue()
+        .defer(d3.csv, "data/h1b.csv")
+        .defer(d3.json, "data/us-albers.json")
+        .defer(d3.json, "data/us-albers-counties.json")
+        .defer(d3.json, "data/zips_us_topo.json")
+        .await(init);
+
+    function init(error, h1b_2017, state, county, zip) {
+        if(error) { console.log(error); }
+
+        var w = Math.max(document.documentElement.clientWidth, window.innerWidth || 0) - 30;
+        var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0) - 30;
+
+        d3.select(".h1b")
+            .datum({
+                h1b:h1b_2017,
+                geo:{
+                    state:state,
+                    county:county,
+                    zip:zip
+                }
+            })
+            .call(h1b.display().dimensions({width:w,height:h}));
+    }
+</script>
+</body>
+</html>
