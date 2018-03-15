@@ -53,12 +53,12 @@ h1b.dataMunger = function(){
                 conditions.push(d['WORKSITE_COUNTY'] == filters.selectedCounty)
             }
 
-            if(filters.selectedCompanies && filters.selectedCompanies.length > 0){
-                conditions.push(filters.selectedCompanies.indexOf(d['EMPLOYER_NAME']) > -1);
+            if(filters.selectedCompany){
+                conditions.push(filters.selectedCompany == d['EMPLOYER_NAME']);
             }
 
-            if(filters.selectedJobs && filters.selectedJobs.length > 0){
-                conditions.push(filters.selectedJobs.indexOf(d['SOC_CODE'].substring(0,2)) > -1);
+            if(filters.selectedJobType){
+                conditions.push(filters.selectedJobType == d['SOC_CODE'].substring(0,2));
             }
 
             if(filters.selectedWageRange && filters.selectedWageRange.length == 2){
@@ -79,8 +79,8 @@ h1b.dataMunger = function(){
                 conditions.push(d['WORKSITE_COUNTY'] == filters.selectedCounty)
             }
 
-            if(filters.selectedJobs && filters.selectedJobs.length > 0){
-                conditions.push(filters.selectedJobs.indexOf(d['SOC_CODE'].substring(0,2)) > -1);
+            if(filters.selectedJobType){
+                conditions.push(filters.selectedJobType==d['SOC_CODE'].substring(0,2));
             }
 
             return _.every(conditions);
@@ -97,8 +97,8 @@ h1b.dataMunger = function(){
                 conditions.push(d['WORKSITE_COUNTY'] == filters.selectedCounty)
             }
 
-            if(filters.selectedCompanies && filters.selectedCompanies.length > 0){
-                conditions.push(filters.selectedCompanies.indexOf(d['EMPLOYER_NAME']) > -1);
+            if(filters.selectedCompany){
+                conditions.push(filters.selectedCompany == d['EMPLOYER_NAME']);
             }
 
             return _.every(conditions);
@@ -344,6 +344,7 @@ h1b.dataMunger = function(){
             return constructor;
         }
         constructor.aggregate = aggregate;
+        constructor.jobTypes = jobTypes;
 
         return constructor;
     }();
@@ -417,7 +418,11 @@ h1b.dataMunger = function(){
         return miniMungers.job.aggregate();
     };
     constructor.execFilters = execFilters;
-    constructor.scales = function(){return scales;}
+    constructor.scales = function(){return scales;};
+    constructor.totalWorkerCount = function(){
+        return totalWorkerCount(filteredData);
+    };
+    constructor.jobTypes = function(){return miniMungers.job.jobTypes;}
     return constructor;
 }();
 
@@ -504,15 +509,101 @@ h1b.filterDescription = function(){
 
     var components;
 
+    var _onUpdateCallbacks = [];
+
+    function onUpdate(){
+        data.execFilters();
+
+        //then
+        draw();
+
+        //then handle callbacks
+        _onUpdateCallbacks.forEach(function(f){
+            f();
+        })
+
+    }
+
     function draw(){
-        components.forEach(function(f){
+        container.attr('width',dimensions.width)
+            .attr('height', dimensions.height);
+
+        container.select('.filter-count')
+            .html(d3.format(',')(data.totalWorkerCount())+ ' H1b Positions');
+        var locationDescription = container.select('.location-description');
+
+        locationDescription.attr('width',dimensions.width*.5);
+        locationDescription.selectAll('span').remove();
+        locationDescription.selectAll('ul').remove();
+
+        if(!filters.selectedState){
+            container.select('.location-description')
+                .html('<span>all states</span>');
+        }
+        else{
+
+            var stateButton = locationDescription.append('ul')
+                .attr('class','list-group');
+            stateButton.append('li').attr('class','list-group-item')
+                .html(filters.selectedState + '&nbsp;&nbsp;<button type="button" class="close"><span aria-hidden="true">&times;</span></button>')
+                .on('click',function(d){ filters.selectedState = null;filters.selectedCounty = null;filters.mapContext = 'state'; onUpdate(); });;
+
+
+            if(filters.selectedCounty){
+
+                stateButton.append('li')
+                    .attr('class','list-group-item')
+                    .html(filters.selectedCounty + ' County&nbsp;&nbsp;<button type="button" class="close" ><span aria-hidden="true">&times;</span></button>')
+                    .on('click',function(d){ filters.selectedCounty = null;filters.mapContext = 'county'; onUpdate(); });
+            }
+        }
+
+        var jobDescription = container.select('.job-description');
+
+        jobDescription.attr('width',dimensions.width*.5);
+        jobDescription.selectAll('span').remove();
+        jobDescription.selectAll('ul').remove();
+
+        if(!filters.selectedJobType){
+            container.select('.job-description')
+                .html('<span>all job types</span>');
+        }
+        else{
+
+            var l = jobDescription.append('ul')
+                .attr('class','list-group');
+            l.append('li').attr('class','list-group-item')
+                .html(data.jobTypes()[filters.selectedJobType] + '&nbsp;&nbsp;<button type="button" class="close"><span aria-hidden="true">&times;</span></button>')
+                .on('click',function(d){ filters.selectedJobType = null;onUpdate(); });;
+        }
+
+        var companyDescription = container.select('.company-description');
+
+        companyDescription.attr('width',dimensions.width*.5);
+        companyDescription.selectAll('span').remove();
+        companyDescription.selectAll('ul').remove();
+
+        if(!filters.selectedCompany){
+            container.select('.company-description')
+                .html('<span>all companies</span>');
+        }
+        else{
+
+            var l = companyDescription.append('ul')
+                .attr('class','list-group');
+            l.append('li').attr('class','list-group-item')
+                .html(filters.selectedCompany + '&nbsp;&nbsp;<button type="button" class="close"><span aria-hidden="true">&times;</span></button>')
+                .on('click',function(d){ filters.selectedCompany = null;onUpdate(); });;
+        }
+
+
+        /*components.forEach(function(f){
            f(container);
-        });
+        });*/
     }
 
     function constructor(selection){
         selection.each(function (d, i) {
-            data = d;
             container = d3.select(this);
             draw();
         });
@@ -520,7 +611,12 @@ h1b.filterDescription = function(){
 
     constructor.dimensions = function (value) {
         if (!arguments.length) return dimensions;
-        dimensions = value;
+        dimensions.parentHeight = value.height;
+        dimensions.parentWidth = value.width;
+
+        dimensions.width = value.width * (1/3);
+        dimensions.height = value.height * (1/3);
+
         return constructor;
     };
     constructor.colors = function (value) {
@@ -541,6 +637,16 @@ h1b.filterDescription = function(){
     constructor.components = function (value) {
         if (!arguments.length) return components;
         components = value;
+        return constructor;
+    };
+    constructor.data = function (value) {
+        if (!arguments.length) return data;
+        data = value;
+        return constructor;
+    };
+    constructor.onUpdate = function (value) {
+        if (!arguments.length) return onUpdate;
+        _onUpdateCallbacks = value;
         return constructor;
     };
     constructor.draw = draw;
@@ -633,8 +739,9 @@ h1b.map = function(){
         var mapBounds = _calcMapBounds(aggregatedData);
 
         container.attr('width',dimensions.width)
-            .attr('height',dimensions.height)
-            .attr('x', dimensions.parentWidth*1/3);
+            .attr('height',dimensions.height*.9)
+            .attr('x', dimensions.parentWidth*1/3)
+            .attr('y', dimensions.height*.1);
 
         scales.values
             .domain(valueExtent)
@@ -701,7 +808,7 @@ h1b.map = function(){
         dimensions.parentWidth = value.width;
 
         dimensions.width = value.width * (1/3);
-        dimensions.height = value.height * (1/2);
+        dimensions.height = value.height * (2/3);
 
         return constructor;
     };
@@ -767,36 +874,7 @@ h1b.companyStats = function () {
         })
 
     }
-    function drawFilterDescription(e){
-        var c = e.select('.company-filter-description');
 
-        var list = c.select('.list-group');
-
-        var l = list.selectAll('li')
-            .data(filters.selectedCompanies);
-        var lis = l
-            .enter()
-            .append('li')
-            .attr('class','list-group-item')
-            .merge(l)
-            .html(function(d){
-               return d;
-            });
-
-        lis.append('button')
-            .attr('class','close')
-            .on('click',function(d){
-                var i = filters.selectedCompanies.indexOf(d);
-                if(i > -1){
-                    filters.selectedCompanies.splice(i,1);
-                }
-                onUpdate();
-            })
-            .append('span')
-            .html('&times;');
-
-        l.exit().remove();
-    }
     var scales = {
         jobCount: d3.scaleLog(),
         wages: d3.scaleLinear()
@@ -859,16 +937,13 @@ h1b.companyStats = function () {
             .append('line')
             .attr('class','job-hover')
             .on('click', function(d){
-                if(filters.selectedCompanies.indexOf(d['name']) == -1){
-                    filters.selectedCompanies.push(d['name']);
-
-                    onUpdate();
+                if(filters.selectedCompany != d['name']){
+                    filters.selectedCompany = d['name'];
                 }
                 else{
-                    filters.selectedCompanies.slice(filters.selectedCompanies.indexOf(d['name']), 1);
-
-                    onUpdate();
+                    filters.selectedCompany = null;
                 }
+                onUpdate();
             })
             .on('mouseover', function (d,i) {
                 var html = d.name;
@@ -1028,7 +1103,7 @@ h1b.companyStats = function () {
         return constructor;
     };
     constructor.draw = draw;
-    constructor.drawFilterDescription = drawFilterDescription;
+
 
     return constructor;
 };
@@ -1107,16 +1182,13 @@ h1b.jobStats = function () {
             .attr('class','job')
             .attr('id',function(d,i){return 'job-'+i;})
             .on('click', function(d){
-                if(filters.selectedJobs.indexOf(d['name']) == -1){
-                    filters.selectedJobs.push(d['name']);
-
-                    onUpdate();
+                if(filters.selectedJobType != d['code']){
+                    filters.selectedJobType = d['code'];
                 }
                 else{
-                    filters.selectedJobs.slice(filters.selectedJobs.indexOf(d['name']), 1);
-
-                    onUpdate();
+                    filters.selectedJobType = null;
                 }
+                onUpdate();
             })
             .on('mouseover', function (d) {
                 var html = d.name;
@@ -1154,16 +1226,13 @@ h1b.jobStats = function () {
             .append('line')
             .attr('class','job-hover')
             .on('click', function(d){
-                if(filters.selectedJobs.indexOf(d['code']) == -1){
-                    filters.selectedJobs.push(d['code']);
-
-                    onUpdate();
+                if(filters.selectedJobType != d['code']){
+                    filters.selectedJobType = d['code'];
                 }
                 else{
-                    filters.selectedJobs.slice(filters.selectedJobs.indexOf(d['code']), 1);
-
-                    onUpdate();
+                    filters.selectedJobType = null;
                 }
+                onUpdate();
             })
             .on('mouseover', function (d,i) {
                 var html = d.name;
@@ -1202,14 +1271,14 @@ h1b.jobStats = function () {
             .attr('y2', dimensions.height * .9)
             .attr('x1', dimensions.width * .2)
             .attr('x2', dimensions.width * .2)
-            .attr('stroke','lightgrey')
+            .attr('stroke','lightgrey');
 
         container.select('line.wages')
             .attr('y1', dimensions.height * .15)
             .attr('y2', dimensions.height * .9)
             .attr('x1', dimensions.width * .8)
             .attr('x2', dimensions.width * .8)
-            .attr('stroke','lightgrey')
+            .attr('stroke','lightgrey');
 
         container.select('text.wage-title')
             .attr('text-anchor','middle')
@@ -1227,7 +1296,7 @@ h1b.jobStats = function () {
             .attr('text-anchor','middle')
             .text('Job Types')
             .attr('y',dimensions.height * .05)
-            .attr('x',dimensions.width /2)
+            .attr('x',dimensions.width /2);
 
         container.selectAll('g.job-ticks').remove();
 
@@ -1351,10 +1420,10 @@ h1b.panels = function(){
         map: this.map(),
         companyStats: this.companyStats(),
         //wageStats: this.wageStats(),
-        jobStats: this.jobStats()
+        jobStats: this.jobStats(),
+        filterDescription: this.filterDescription()
     };
-    var _onUpdateCallbacks = [];
-
+    var _onUpdateCallbacks = [components.filterDescription.draw];
 
     function draw(){
         container.attr('style','width:'+dimensions.width+'px;height:'+dimensions.height+'px;');
@@ -1362,7 +1431,7 @@ h1b.panels = function(){
             .dimensions(dimensions)
             .filters(filters)
             .colors(colors)
-            .onUpdate(_onUpdateCallbacks.concat([components.companyStats.draw, components.jobStats.draw]))
+            .onUpdate(_onUpdateCallbacks.concat([components.companyStats.draw, components.jobStats.draw, components.filterDescription.draw]))
             .data(data);
 
         container.select('.map')
@@ -1372,7 +1441,7 @@ h1b.panels = function(){
             .dimensions(dimensions)
             .filters(filters)
             .colors(colors)
-            .onUpdate(_onUpdateCallbacks.concat([components.map.draw, components.jobStats.draw]))
+            .onUpdate(_onUpdateCallbacks.concat([components.map.draw, components.jobStats.draw, components.filterDescription.draw]))
             .data(data);
 
         container.select('.company-stats')
@@ -1392,11 +1461,20 @@ h1b.panels = function(){
             .dimensions(dimensions)
             .filters(filters)
             .colors(colors)
-            .onUpdate(_onUpdateCallbacks.concat([components.map.draw,components.companyStats.draw]))
+            .onUpdate(_onUpdateCallbacks.concat([components.map.draw,components.companyStats.draw, components.filterDescription.draw]))
             .data(data);
 
         container.select('.job-stats')
             .call(components.jobStats);
+
+        components.filterDescription
+            .dimensions(dimensions)
+            .filters(filters)
+            .colors(colors)
+            .onUpdate(_onUpdateCallbacks.concat([components.map.draw,components.companyStats.draw, components.jobStats.draw]))
+            .data(data);
+        container.select('.filter-description')
+            .call(components.filterDescription);
     }
 
     function constructor(selection){
@@ -1441,12 +1519,7 @@ h1b.panels = function(){
         _onUpdateCallbacks = value;
         return constructor;
     };
-    constructor.drawFilterDescriptions = function(){
-        return [
-            components.map.drawFilterDescription,
-            components.companyStats.drawFilterDescription
-        ]
-    };
+
     return constructor;
 };
 
@@ -1614,8 +1687,8 @@ h1b.display = function(){
         mapContext:'state',
         selectedState:null,
         selectedCounty:null,
-        selectedCompanies:[],
-        selectedJobs:[],
+        selectedCompany:null,
+        selectedJobType:null,
         selectedWageRange:null
     };
 
@@ -1628,8 +1701,7 @@ h1b.display = function(){
         title: this.title(),
         panels: this.panels(),
         jobList: this.jobList(),
-        jobListPagination: this.jobListPagination(),
-        filterDescription: this.filterDescription()
+        jobListPagination: this.jobListPagination()
     };
 
     function draw(){
@@ -1642,14 +1714,9 @@ h1b.display = function(){
             .dimensions(dimensions)
             .filters(filters)
             .colors(colors)
-            .onUpdate([components.filterDescription.draw])
             .data(data);
 
-        components.filterDescription
-            .dimensions(dimensions)
-            .filters(filters)
-            .colors(colors)
-            .components(components.panels.drawFilterDescriptions());
+
 
         components.jobList
             .dimensions(dimensions)
@@ -1666,8 +1733,7 @@ h1b.display = function(){
             .call(components.title);
         container.select('.panels')
             .call(components.panels);
-        container.select('.filter-description')
-            .call(components.filterDescription);
+
         container.select('.job-list')
             .call(components.jobList);
         container.selectAll('.job-list-pagination')

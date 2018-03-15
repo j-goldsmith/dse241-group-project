@@ -19,7 +19,7 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col text-center">
-                <h1 class="title">H1B Job Market</h1>
+                <h1 class="title  display-3">H1B Job Market</h1>
             </div>
         </div>
     </div>
@@ -27,11 +27,11 @@
     <div class="panels">
 
         <svg class="job-stats float-left">
-            <text class="title"></text>
+            <text class="title h3"></text>
 
             <g class="attribute-legend">
-                <text class="wage-title">Average Wages</text>
-                <text class="job-title">Certified Positions</text>
+                <text class="wage-title h5">Average Wages</text>
+                <text class="job-title h5">Certified Positions</text>
             </g>
             <g class="plots"></g>
             <g class="attributes">
@@ -40,14 +40,55 @@
             </g>
 
         </svg>
-        <svg class="map float-left">
-            <g class="contextPaths"></g>
-        </svg>
+        <div class="float-left">
+            <svg class="map">
+                <g class="contextPaths"></g>
+            </svg>
+            <div class="legend filter-description text-center">
+                <table class="container-fluid">
+                    <tr class="row">
+                        <td class="col">
+                            <div class="filter-count display-4"></div>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td class="col">
+                            <table style="margin:auto;">
+                                <tr>
+                                    <td><span>in&nbsp;&nbsp;</span></td>
+                                    <td><span class="location-description"></span></td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td class="col">
+                            <table style="margin:auto;">
+                                <tr>
+                                    <td><span>for&nbsp;&nbsp;</span></td>
+                                    <td><span class="job-description"></span></td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td class="col">
+                            <table style="margin:auto;">
+                                <tr>
+                                    <td><span>at&nbsp;&nbsp;</span></td>
+                                    <td><span class="company-description"></span></td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
         <svg class="company-stats float-left">
-            <text class="title"></text>
+            <text class="title h3"></text>
             <g class="attribute-legend">
-                <text class="wage-title">Average Wages</text>
-                <text class="job-title">Certified Positions</text>
+                <text class="wage-title h5">Average Wages</text>
+                <text class="job-title h5">Certified Positions</text>
             </g>
             <g class="plots"></g>
             <g class="attributes">
@@ -57,40 +98,9 @@
 
             </g>
         </svg>
-        <div class="legend float-left"></div>
-
     </div>
 
     <div class="container-fluid">
-        <div class="row filter-description">
-
-
-            <div class="location-filter-description col text-center">
-                <h5>Location</h5>
-                <div class="selected-state alert alert-primary" role="alert">
-                    <span><strong>State:</strong></span>
-                    <button type="button" class="close" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="selected-county alert alert-primary" role="alert">
-                    <span><strong>County:</strong></span>
-                    <button type="button" class="close" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            </div>
-            <div class="job-filter-description col text-center">
-                <h5>Jobs</h5>
-            </div>
-            <div class="company-filter-description col text-center">
-                <h5>Companies</h5>
-                <ul class="list-group"></ul>
-            </div>
-
-
-        </div>
-
         <div class="row">
             <div class="job-list-pagination col">
 
@@ -114,7 +124,7 @@
     </div>
     <script type="application/javascript">
         d3.queue()
-            .defer(d3.csv, "data/h1b.csv")
+            .defer(d3.csv, "data/h1b_clean.csv")
             .defer(d3.json, "data/us-albers.json")
             .defer(d3.json, "data/us-albers-counties.json")
             .defer(d3.json, "data/zips_us_topo.json")
