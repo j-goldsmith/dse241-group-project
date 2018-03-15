@@ -3,55 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <title>Final</title>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
     <script type="application/javascript" src="js/underscore-min.js"></script>
     <script type="application/javascript" src="js/d3.v4.min.js"></script>
-    <script type="application/javascript" src="js/topojson.js"></script>
     <script type="application/javascript" src="https://momentjs.com/downloads/moment.min.js"></script>
     <script type="application/javascript" src="https://d3js.org/topojson.v2.min.js"></script>
 
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link type="text/css" rel="stylesheet" href="h1b.css"  />
     <script type="application/javascript" src="h1b.js"></script>
 </head>
-<body>
-<div class="container-fluid">
-    <div class="row">
-        <div class="col">
-            <div class="h1b">
-                <h1 class="title">H1B Employment Opportunities</h1>
-                <svg class="map">
-                    <g class="contextPaths"></g>
-                </svg>
-                <svg class="details"></svg>
+<body class="h1b">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col text-center">
+                <h1 class="title">H1B Job Market</h1>
             </div>
         </div>
     </div>
-</div>
 
-<script type="application/javascript">
-    d3.queue()
-        .defer(d3.csv, "data/h1b.csv")
-        .defer(d3.json, "data/us-albers.json")
-        .defer(d3.json, "data/us-albers-counties.json")
-        .defer(d3.json, "data/zips_us_topo.json")
-        .await(init);
+    <div class="panels">
 
-    function init(error, h1b_2017, state, county, zip) {
-        if(error) { console.log(error); }
+        <svg class="job-stats float-left">
+            <text class="title"></text>
 
-        var w = Math.max(document.documentElement.clientWidth, window.innerWidth || 0) - 30;
-        var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0) - 30;
+            <g class="attribute-legend">
+                <text class="wage-title">Average Wages</text>
+                <text class="job-title">Certified Positions</text>
+            </g>
+            <g class="plots"></g>
+            <g class="attributes">
+                <line class="wages"></line>
+                <line class="jobs"></line>
+            </g>
 
-        d3.select(".h1b")
-            .datum({
-                h1b:h1b_2017,
-                geo:{
-                    state:state,
-                    county:county,
-                    zip:zip
-                }
-            })
-            .call(h1b.display().dimensions({width:w,height:h}));
-    }
-</script>
+        </svg>
+        <svg class="map float-left">
+            <g class="contextPaths"></g>
+        </svg>
+        <svg class="company-stats float-left">
+            <text class="title"></text>
+            <g class="attribute-legend">
+                <text class="wage-title">Average Wages</text>
+                <text class="job-title">Certified Positions</text>
+            </g>
+            <g class="plots"></g>
+            <g class="attributes">
+                <line class="wages"></line>
+                <line class="jobs"></line>
+
+
+            </g>
+        </svg>
+        <div class="legend float-left"></div>
+
+    </div>
+
+    <div class="container-fluid">
+        <div class="row filter-description">
+
+
+            <div class="location-filter-description col text-center">
+                <h5>Location</h5>
+                <div class="selected-state alert alert-primary" role="alert">
+                    <span><strong>State:</strong></span>
+                    <button type="button" class="close" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="selected-county alert alert-primary" role="alert">
+                    <span><strong>County:</strong></span>
+                    <button type="button" class="close" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            </div>
+            <div class="job-filter-description col text-center">
+                <h5>Jobs</h5>
+            </div>
+            <div class="company-filter-description col text-center">
+                <h5>Companies</h5>
+                <ul class="list-group"></ul>
+            </div>
+
+
+        </div>
+
+        <div class="row">
+            <div class="job-list-pagination col">
+
+            </div>
+        </div>
+        <div class="job-list row">
+            <div class="col">
+
+            </div>
+        </div>
+        <div class="row">
+            <div class="job-list-pagination col">
+
+            </div>
+        </div>
+    </div>
+
+    <div id="tooltip" style="position:absolute;" class="tooltip bs-tooltip-top">
+        <div class="tooltip-inner">
+        </div>
+    </div>
+    <script type="application/javascript">
+        d3.queue()
+            .defer(d3.csv, "data/h1b.csv")
+            .defer(d3.json, "data/us-albers.json")
+            .defer(d3.json, "data/us-albers-counties.json")
+            .defer(d3.json, "data/zips_us_topo.json")
+            .await(init);
+
+        function init(error, h1b_2017, state, county, zip) {
+            if(error) { console.log(error); }
+
+            var w = Math.max(document.documentElement.clientWidth, window.innerWidth || 0) - 40;
+            var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+            d3.select(".h1b")
+                .datum({
+                    h1b:h1b_2017,
+                    geo:{
+                        state:state,
+                        county:county,
+                        zip:zip,
+
+                    }
+                })
+                .call(h1b.display().dimensions({width:w,height:h}));
+        }
+    </script>
 </body>
 </html>
