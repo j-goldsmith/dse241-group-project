@@ -435,8 +435,7 @@ h1b.dataMunger = function(){
         });
         geo = {
             state: topoToGeoJson(d['geo'],'state'),
-            county: topoToGeoJson(d['geo'],'county'),
-            zip: topoToGeoJson(d['geo'],'zip')
+            county: topoToGeoJson(d['geo'],'county')
         };
         wages = d['wages'];
         filters = f;
@@ -556,6 +555,9 @@ h1b.filterDescription = function(){
 
         //then
         draw();
+        if(!filters.selectedState) {
+            d3.select('g.contextPaths').attr("transform", null)
+        }
 
         //then handle callbacks
         _onUpdateCallbacks.forEach(function(f){
@@ -569,7 +571,7 @@ h1b.filterDescription = function(){
             .attr('height', dimensions.height);
 
         container.select('.filter-count')
-            .html(d3.format(',')(data.totalWorkerCount())+ ' H1-B Positions');
+            .html(d3.format(',')(data.totalWorkerCount())+ ' H-1B Positions');
         var locationDescription = container.select('.location-description');
 
         locationDescription.attr('width',dimensions.width*.5);
@@ -737,6 +739,7 @@ h1b.map = function(){
         data.execFilters();
 
         //then
+        container.select('g.contextPaths').attr("transform",null)
         draw();
 
         //then handle callbacks
@@ -834,7 +837,7 @@ h1b.map = function(){
             .on('mouseover', function (d) {
                 var tooltipElement = d3.select('#tooltip');
 
-                var html = d.properties.indexValue+'<br/>'+d3.format(',')(d.properties.totalCount)+' certified positions';
+                var html = (d.properties.indexValue ? d.properties.indexValue+'<br/>':'')+d3.format(',')(d.properties.totalCount)+' certified positions';
                 tooltipElement.select('.tooltip-inner').html(html)
                 tooltipElement.transition()
                     .duration(200)
@@ -1015,7 +1018,7 @@ h1b.companyStats = function () {
 
                 container.select('#job-'+i)
                     .attr('stroke-width',4).attr('stroke',colors.secondary[3]);
-                tooltipElement.select('.tooltip-inner').html(html).style("opacity", .9);
+                tooltipElement.select('.tooltip-inner').html(html).style("opacity", .95);
                 tooltipElement.transition()
                     .duration(200)
                     .style("opacity", .9);
@@ -1073,6 +1076,9 @@ h1b.companyStats = function () {
                 tooltipElement.transition()
                     .duration(500)
                     .style("opacity", 0);
+
+                tooltipElement.style("left", 0)
+                    .style("top", 0);
             })
             .merge(p)
             .attr('y2',function(d){ return jScale(d['jobCount']); })
@@ -1413,6 +1419,9 @@ h1b.jobStats = function () {
                 tooltipElement.transition()
                     .duration(500)
                     .style("opacity", 0);
+
+                tooltipElement.style("left", 0)
+                    .style("top", 0);
             })
             .merge(p)
             .attr('y2',function(d){ return jScale(d['jobCount']); })

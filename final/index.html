@@ -21,7 +21,7 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col text-center">
-                <h1 class="title  display-3">H1-B Job Market</h1>
+                <h1 class="title  display-3">H-1B Job Market</h1>
             </div>
         </div>
     </div>
@@ -137,10 +137,9 @@
             .defer(d3.csv, "data/h1b_clean.csv")
             .defer(d3.json, "data/us-albers.json")
             .defer(d3.json, "data/us-albers-counties.json")
-            .defer(d3.json, "data/zips_us_topo.json")
             .await(init);
 
-        function init(error, h1b_2017, state, county, zip) {
+        function init(error, h1b_2017, state, county) {
             if(error) { console.log(error); }
 
             var w = Math.max(document.documentElement.clientWidth, window.innerWidth || 0) - 40;
@@ -152,7 +151,7 @@
                     geo:{
                         state:state,
                         county:county,
-                        zip:zip,
+                        zip:[],
 
                     }
                 })
