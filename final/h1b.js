@@ -4,11 +4,30 @@ h1b.dataMunger = function(){
     var data,filteredData, filteredForCompanies, filteredForJobs, filters,geo, wages, filteredWages;
 
     var mapMunged,companyMunged,jobMunged;
+    var jobCountColors =  [
+        '#f0f9e8',
+        '#ccebc5',
+        '#a8ddb5',
+        '#7bccc4',
+        '#43a2ca',
+        '#0868ac'
+    ];
+
+    var wageColors = [
+        '#feedde',
+        '#fdd0a2',
+        '#fdae6b',
+        '#fd8d3c',
+        '#e6550d',
+        '#a63603'
+    ];
 
     var scales = {
         jobCount:d3.scaleLog(),
+        jobCountCompanies:d3.scaleLog(),
+        jobCountJobTypes:d3.scaleLog(),
         wages:d3.scaleLinear(),
-        jobCountColor:d3.scaleThreshold(),
+        jobCountColor:d3.scaleThreshold().domain([1,10,100,1000,10000,100000]).range(jobCountColors),
         wagesColor:d3.scaleThreshold()
     };
 
@@ -110,18 +129,39 @@ h1b.dataMunger = function(){
         companyMunged = miniMungers.company.aggregate();
         jobMunged = miniMungers.job.aggregate();
 
-        var jobMax = _.max([
-            _.max(_.pluck(companyMunged,'jobCount')),
-            _.max(_.pluck(jobMunged,'jobCount')),
-            _.max(_.pluck(mapMunged,function(d){return d.properties['totalCount'];}))
-        ]);
+
+        var plucked = _.pluck(companyMunged,'jobCount');
+        var companyJobCountMax = _.max(plucked);
+        var companyJobCountMin = _.min(plucked);
+
+        var jobTypeJobCountMax =  _.max(_.pluck(jobMunged,'jobCount'));
+
 
         var wageMax = _.max([
             _.max(_.pluck(companyMunged,'avgWage')),
             _.max(_.pluck(jobMunged,'avgWage'))
         ]);
-        scales.jobCount.domain([1,jobMax]);
-        scales.wages.domain([0,wageMax])
+
+
+        if(companyJobCountMax > 10000){
+            scales.jobCountCompanies = d3.scaleLog();
+        }
+        else {
+            scales.jobCountCompanies = d3.scaleLinear();
+        }
+
+
+        if(jobTypeJobCountMax > 10000){
+            scales.jobCountJobTypes = d3.scaleLog();
+        }
+        else {
+            scales.jobCountJobTypes = d3.scaleLinear();
+        }
+
+        scales.jobCountJobTypes.domain([1,jobTypeJobCountMax]);
+        scales.jobCountCompanies.domain([companyJobCountMin,companyJobCountMax]);
+
+        scales.wages.domain([10000,wageMax])
     }
 
     mapMunger = function(){
@@ -529,7 +569,7 @@ h1b.filterDescription = function(){
             .attr('height', dimensions.height);
 
         container.select('.filter-count')
-            .html(d3.format(',')(data.totalWorkerCount())+ ' H1b Positions');
+            .html(d3.format(',')(data.totalWorkerCount())+ ' H1-B Positions');
         var locationDescription = container.select('.location-description');
 
         locationDescription.attr('width',dimensions.width*.5);
@@ -596,6 +636,21 @@ h1b.filterDescription = function(){
                 .on('click',function(d){ filters.selectedCompany = null;onUpdate(); });;
         }
 
+
+        var legend = container.select('.color-legend');
+        legend.attr('width',dimensions.width).attr('height',50);
+        legend.selectAll('g').remove();
+        legend.append('g');
+
+        var legendOrdinal = d3.legendColor()
+            .orient("horizontal")
+            .labels([0,1,10,100,'1,000','10,000+'])
+            .shapeWidth((dimensions.width-20)/6)
+            .shapeHeight(20)
+            .scale(data.scales().jobCountColor);
+
+        legend.select("g")
+            .call(legendOrdinal);
 
         /*components.forEach(function(f){
            f(container);
@@ -735,7 +790,7 @@ h1b.map = function(){
 
     function draw(){
         var aggregatedData = data.aggregateForMap();
-        var valueExtent = d3.extent(_.map(aggregatedData.features,function(d){return d.properties.totalCount;}));
+     //   var valueExtent = d3.extent(_.map(aggregatedData.features,function(d){return d.properties.totalCount;}));
         var mapBounds = _calcMapBounds(aggregatedData);
 
         container.attr('width',dimensions.width)
@@ -743,9 +798,11 @@ h1b.map = function(){
             .attr('x', dimensions.parentWidth*1/3)
             .attr('y', dimensions.height*.1);
 
-        scales.values
-            .domain(valueExtent)
-            .range(colors.secondary.slice(1));
+     //   scales.values
+    //        .domain(valueExtent)
+      //
+        //      .range(colors.secondary.slice(1));
+        var globalScales = data.scales();
 
         var geoProjection = d3.geoMercator()
             .scale(mapBounds.scale)
@@ -759,13 +816,10 @@ h1b.map = function(){
             .selectAll("path").remove();
         var p = container.select('g.contextPaths')
             .selectAll("path").data(aggregatedData.features);
-
         p.enter()
             .append("path")
             .style('stroke', '#f7f7f7')
             .style('stroke-width', 0.3)
-            .merge(p)
-            .attr("d", geoPath)
             .on('click',function(d){
                 if(filters.mapContext == 'state'){
                     filters.mapContext = 'county';
@@ -777,10 +831,30 @@ h1b.map = function(){
 
                 onUpdate();
             })
+            .on('mouseover', function (d) {
+                var tooltipElement = d3.select('#tooltip');
+
+                var html = d.properties.indexValue+'<br/>'+d3.format(',')(d.properties.totalCount)+' certified positions';
+                tooltipElement.select('.tooltip-inner').html(html)
+                tooltipElement.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                tooltipElement
+                    .style("left", (d3.event.pageX + 40 ) + "px")
+                    .style("top", (d3.event.pageY - 28) + "px");
+
+            })
+            .on('mouseout', function (d) {
+                var tooltipElement = d3.select('#tooltip');
+
+                tooltipElement.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            })
+            .merge(p)
+            .attr("d", geoPath)
             .attr('fill', function(d){
-                return d.properties.totalCount
-                    ? scales.values(d.properties.totalCount)
-                    : colors.secondary[0];
+                return globalScales.jobCountColor(d.properties.totalCount);
             });
 
         p.exit().remove();
@@ -884,28 +958,18 @@ h1b.companyStats = function () {
         var aggregatedData = data.aggregateForCompanies();
         var globalScales = data.scales();
 
-        var jobCountExtent = d3.extent(_.map(aggregatedData,function(d){return d['jobCount']; }));
-        var wageExtent = d3.extent(_.map(aggregatedData,function(d){return d['avgWage']; }));
-
         container.attr('width',dimensions.width)
             .attr('height',dimensions.height)
             .attr('x', dimensions.parentWidth * (2/3));
 
-        if(jobCountExtent[1] > 15000){
-            scales.jobCount = d3.scaleLog();
-        }
-        else {
-            scales.jobCount = d3.scaleLinear();
-        }
-
         globalScales.wages
             .range([dimensions.height * .9, dimensions.height * .15]);
 
-        scales.jobCount
-            .domain(jobCountExtent)
+        var jScale = globalScales.jobCountCompanies
             .range([dimensions.height * .9, dimensions.height * .15]);
 
-        var jobTicks = scales.jobCount.ticks(5);
+
+        var jobTicks = jScale.ticks(5);
         var wageTicks = globalScales.wages.ticks(5);
 
         var plots = container.select('.plots');
@@ -920,13 +984,13 @@ h1b.companyStats = function () {
             .attr('id',function(d,i){return 'job-'+i;})
             .merge(p)
             .transition()
-            .attr('y2',function(d){ return scales.jobCount(d['jobCount']); })
+            .attr('y2',function(d){ return jScale(d['jobCount']); })
             .attr('x2',dimensions.width * .8)
             .attr('y1',function(d){ return globalScales.wages(d['avgWage']); })
             .attr('x1',dimensions.width * .2)
-            .attr('opacity',.65)
-            .attr('stroke','lightgrey')
-            .attr('stroke-width',2.5);
+            .attr('stroke',function(d){return filters.selectedCompany == d['name'] ? colors.secondary[4]:'lightgrey';})
+            .attr('opacity',function(d){return filters.selectedCompany == d['name']? .9:.65;})
+            .attr('stroke-width',function(d){return filters.selectedCompany == d['name']? 4: 2.5})
 
         p.exit().remove();
 
@@ -947,8 +1011,10 @@ h1b.companyStats = function () {
             })
             .on('mouseover', function (d,i) {
                 var html = d.name;
+                var jScale = globalScales.jobCountCompanies;
+
                 container.select('#job-'+i)
-                    .attr('stroke-width',4);
+                    .attr('stroke-width',4).attr('stroke',colors.secondary[3]);
                 tooltipElement.select('.tooltip-inner').html(html).style("opacity", .9);
                 tooltipElement.transition()
                     .duration(200)
@@ -957,17 +1023,59 @@ h1b.companyStats = function () {
                     .style("left", (d3.event.pageX + 40 ) + "px")
                     .style("top", (d3.event.pageY - 28) + "px");
 
+
+                var g = container.select('g.hovered-data-label');
+
+                g.selectAll('text').remove();
+                g.selectAll('line').remove();
+
+                g.append('line')
+                    .attr('x1',dimensions.width * .2)
+                    .attr('x2',dimensions.width * .15)
+                    .attr('y1',globalScales.wages(d['avgWage']))
+                    .attr('y2',globalScales.wages(d['avgWage']))
+                    .attr('stroke',colors.secondary[3]);
+
+                g.append('line')
+                    .attr('x1',dimensions.width * .8)
+                    .attr('x2',dimensions.width * .85)
+                    .attr('y1',jScale(d['jobCount']))
+                    .attr('y2',jScale(d['jobCount']))
+                    .attr('stroke',colors.secondary[3]);
+
+                g.append('text')
+                    .attr('x', dimensions.width * .86)
+                    .attr('y', jScale(d['jobCount']) + 5)
+                    .attr('text-anchor','start')
+                    .text(d3.format(',')(d['jobCount']))
+                    .attr('fill',colors.secondary[3]);
+
+
+                g.append('text')
+                    .attr('x', dimensions.width * .14)
+                    .attr('y', globalScales.wages(d['avgWage']) + 5)
+                    .attr('text-anchor','end')
+                    .text(d3.format('$,.0f')(d['avgWage']))
+                    .attr('fill',colors.secondary[3]);
+
+
             })
             .on('mouseout', function (d,i) {
                 container.select('#job-'+i)
-                    .attr('stroke-width',2.5).style("opacity", .65);
+                    .attr('stroke',filters.selectedCompany == d['name'] ? colors.secondary[4]:'lightgrey')
+                    .attr('stroke-width',filters.selectedCompany == d['name']? 4: 2.5);
+
+                var g = container.select('g.hovered-data-label');
+
+                g.selectAll('text').remove();
+                g.selectAll('line').remove();
 
                 tooltipElement.transition()
                     .duration(500)
                     .style("opacity", 0);
             })
             .merge(p)
-            .attr('y2',function(d){ return scales.jobCount(d['jobCount']); })
+            .attr('y2',function(d){ return jScale(d['jobCount']); })
             .attr('x2',dimensions.width * .8)
             .attr('y1',function(d){ return globalScales.wages(d['avgWage']); })
             .attr('x1',dimensions.width * .2)
@@ -1021,13 +1129,13 @@ h1b.companyStats = function () {
         g.append('line')
             .attr('x1',dimensions.width * .8)
             .attr('x2',dimensions.width * .85)
-            .attr('y1',function(d){return scales.jobCount(d);})
-            .attr('y2',function(d){return scales.jobCount(d);})
+            .attr('y1',function(d){return jScale(d);})
+            .attr('y2',function(d){return jScale(d);})
             .attr('stroke','lightgrey');
 
         g.append('text')
             .attr('x', dimensions.width * .86)
-            .attr('y', function(d){return scales.jobCount(d) + 5;})
+            .attr('y', function(d){return jScale(d) + 5;})
             .attr('fill','lightgrey')
             .text(function(d){return d3.format(",")(d);});
 
@@ -1056,6 +1164,51 @@ h1b.companyStats = function () {
             .text(function(d){return d3.format("$,")(d);});
 
         g.exit().remove();
+
+
+        var g = container.select('g.selected-data-label');
+
+        g.selectAll('text').remove();
+        g.selectAll('line').remove();
+        if(filters.selectedCompany){
+            var point = _.find(aggregatedData, function (d) {
+                return d['name'] == filters.selectedCompany;
+            });
+
+
+            g.append('line')
+                .attr('x1',dimensions.width * .8)
+                .attr('x2',dimensions.width * .85)
+                .attr('y1',function(d){return jScale(point['jobCount']);})
+                .attr('y2',function(d){return jScale(point['jobCount']);})
+
+                .attr('stroke',colors.secondary[4]);
+
+            g.append('line')
+                .attr('x1',dimensions.width * .2)
+                .attr('x2',dimensions.width * .15)
+                .attr('y1',function(d){return globalScales.wages(point['avgWage']);})
+                .attr('y2',function(d){return globalScales.wages(point['avgWage']);})
+                .attr('stroke',colors.secondary[4]);
+
+            g.append('text')
+                .attr('x', dimensions.width * .86)
+
+                .attr('y', jScale(point['jobCount']) + 5)
+                .attr('text-anchor','start')
+                .text(d3.format(',')(point['jobCount']))
+                .attr('fill',colors.secondary[4]);
+
+
+            g.append('text')
+                .attr('x', dimensions.width * .14)
+                .attr('y', globalScales.wages(point['avgWage']) + 5)
+                .attr('text-anchor','end')
+                .text(d3.format('$,.0f')(point['avgWage']))
+                .attr('fill',colors.secondary[4]);
+
+
+        }
 
     }
 
@@ -1146,33 +1299,19 @@ h1b.jobStats = function () {
         var aggregatedData = data.aggregateForJobs();
         var globalScales = data.scales();
 
-        var jobCountExtent = d3.extent(_.map(aggregatedData,function(d){return d['jobCount']; }));
-        var wageExtent = d3.extent(_.map(aggregatedData,function(d){return d['avgWage']; }));
-
         container.attr('width',dimensions.width)
             .attr('height',dimensions.height);
 
         globalScales.wages
             .range([dimensions.height * .9, dimensions.height * .15]);
 
-        if(jobCountExtent[1] > 15000){
-            scales.jobCount = d3.scaleLog();
-        }
-        else {
-            scales.jobCount = d3.scaleLinear();
-        }
+        var jScale = globalScales.jobCountJobTypes
+            .range([dimensions.height * .9, dimensions.height * .15]);
 
-        scales.jobCount
-            .domain(jobCountExtent)
-            .range([dimensions.height * .9, dimensions.height * .15])
-            .nice();
-
-        var jobTicks = scales.jobCount.ticks(5);
+        var jobTicks = jScale.ticks(5);
         var wageTicks = globalScales.wages.ticks(5);
 
-
         var plots = container.select('.plots');
-        var tooltipElement = d3.select('#tooltip');
 
         var p = plots.selectAll('line.job')
             .data(aggregatedData);
@@ -1181,43 +1320,17 @@ h1b.jobStats = function () {
             .append('line')
             .attr('class','job')
             .attr('id',function(d,i){return 'job-'+i;})
-            .on('click', function(d){
-                if(filters.selectedJobType != d['code']){
-                    filters.selectedJobType = d['code'];
-                }
-                else{
-                    filters.selectedJobType = null;
-                }
-                onUpdate();
-            })
-            .on('mouseover', function (d) {
-                var html = d.name;
-
-                tooltipElement.transition()
-                    .duration(200)
-                    .style("opacity", .9);
-                tooltipElement.html(html)
-                    .style("left", (d3.event.pageX + 40 ) + "px")
-                    .style("top", (d3.event.pageY - 28) + "px");
-
-            })
-            .on('mouseout', function (d) {
-                tooltipElement.transition()
-                    .duration(500)
-                    .style("opacity", 0);
-            })
             .merge(p)
             .transition()
-            .attr('y2',function(d){ return scales.jobCount(d['jobCount']); })
+            .attr('y2',function(d){ return jScale(d['jobCount']); })
             .attr('x2',dimensions.width * .2)
             .attr('y1',function(d){ return globalScales.wages(d['avgWage']); })
             .attr('x1',dimensions.width * .8)
-            .attr('stroke','lightgrey')
-            .attr('opacity',.65)
-            .attr('stroke-width',2.5);
+            .attr('stroke',function(d){return filters.selectedJobType == d['code'] ? colors.secondary[4]:'lightgrey';})
+            .attr('opacity',function(d){return filters.selectedJobType == d['code']? .9:.65;})
+            .attr('stroke-width',function(d){return filters.selectedJobType == d['code']? 4: 2.5});
 
         p.exit().remove();
-
 
         var p = plots.selectAll('line.job-hover')
             .data(aggregatedData);
@@ -1235,28 +1348,74 @@ h1b.jobStats = function () {
                 onUpdate();
             })
             .on('mouseover', function (d,i) {
+                var tooltipElement = d3.select('#tooltip');
+                var jScale = globalScales.jobCountJobTypes;
+
                 var html = d.name;
                 container.select('#job-'+i)
-                    .attr('stroke-width',4);
-                tooltipElement.select('.tooltip-inner').html(html).style("opacity", .9);
+                    .attr('stroke-width',4).attr('stroke',colors.secondary[3]);
+                tooltipElement.select('.tooltip-inner').html(html).style("opacity", 1);
                 tooltipElement.transition()
                     .duration(200)
-                    .style("opacity", .9);
+                    .style("opacity", .95);
                 tooltipElement
                     .style("left", (d3.event.pageX + 40 ) + "px")
                     .style("top", (d3.event.pageY - 28) + "px");
 
+
+                var g = container.select('g.hovered-data-label');
+
+                g.selectAll('text').remove();
+                g.selectAll('line').remove();
+
+                g.append('line')
+                    .attr('x1',dimensions.width * .8)
+                    .attr('x2',dimensions.width * .85)
+                    .attr('y1',globalScales.wages(d['avgWage']))
+                    .attr('y2',globalScales.wages(d['avgWage']))
+                    .attr('stroke',colors.secondary[3]);
+
+                g.append('line')
+                    .attr('x1',dimensions.width * .2)
+                    .attr('x2',dimensions.width * .15)
+                    .attr('y1',jScale(d['jobCount']))
+                    .attr('y2',jScale(d['jobCount']))
+                    .attr('stroke',colors.secondary[3]);
+
+                g.append('text')
+                    .attr('x', dimensions.width * .14)
+                    .attr('y', jScale(d['jobCount']) + 5)
+                    .attr('text-anchor','end')
+                    .text(d3.format(',')(d['jobCount']))
+                    .attr('fill',colors.secondary[3]);
+
+
+                g.append('text')
+                    .attr('x', dimensions.width * .86)
+                    .attr('y', globalScales.wages(d['avgWage']) + 5)
+                    .attr('text-anchor','start')
+                    .text(d3.format('$,.0f')(d['avgWage']))
+                    .attr('fill',colors.secondary[3]);
+
             })
             .on('mouseout', function (d,i) {
+                var tooltipElement = d3.select('#tooltip');
+
                 container.select('#job-'+i)
-                    .attr('stroke-width',2.5).style("opacity", .65);
+                    .attr('stroke',filters.selectedJobType == d['code'] ? colors.secondary[4]:'lightgrey')
+                    .attr('stroke-width',filters.selectedJobType == d['code']? 4: 2.5);
+
+                var g = container.select('g.hovered-data-label');
+
+                g.selectAll('text').remove();
+                g.selectAll('line').remove();
 
                 tooltipElement.transition()
                     .duration(500)
                     .style("opacity", 0);
             })
             .merge(p)
-            .attr('y2',function(d){ return scales.jobCount(d['jobCount']); })
+            .attr('y2',function(d){ return jScale(d['jobCount']); })
             .attr('x2',dimensions.width * .2)
             .attr('y1',function(d){ return globalScales.wages(d['avgWage']); })
             .attr('x1',dimensions.width * .8)
@@ -1298,9 +1457,9 @@ h1b.jobStats = function () {
             .attr('y',dimensions.height * .05)
             .attr('x',dimensions.width /2);
 
-        container.selectAll('g.job-ticks').remove();
+        container.select('.attribute-legend').selectAll('g.job-ticks').remove();
 
-        var g = container.selectAll('g.job-ticks')
+        var g = container.select('.attribute-legend').selectAll('g.job-ticks')
             .data(jobTicks)
             .enter()
             .append('g');
@@ -1309,22 +1468,22 @@ h1b.jobStats = function () {
         g.append('line')
             .attr('x1',dimensions.width * .2)
             .attr('x2',dimensions.width * .15)
-            .attr('y1',function(d){return scales.jobCount(d);})
-            .attr('y2',function(d){return scales.jobCount(d);})
+            .attr('y1',function(d){return jScale(d);})
+            .attr('y2',function(d){return jScale(d);})
             .attr('stroke','lightgrey');
 
         g.append('text')
             .attr('text-anchor','end')
             .attr('x', dimensions.width * .14)
-            .attr('y', function(d){return scales.jobCount(d) + 5;})
+            .attr('y', function(d){return jScale(d) + 5;})
             .attr('fill','lightgrey')
             .text(function(d){return d3.format(",")(d);});
 
         g.exit().remove();
 
-        container.selectAll('g.wage-ticks').remove();
+        container.select('.attribute-legend').selectAll('g.wage-ticks').remove();
 
-        var g = container.selectAll('g.wage-ticks')
+        var g = container.select('.attribute-legend').selectAll('g.wage-ticks')
             .data(wageTicks)
             .enter()
             .append('g');
@@ -1345,6 +1504,50 @@ h1b.jobStats = function () {
             .text(function(d){return d3.format("$,")(d);});
 
         g.exit().remove();
+
+        var g = container.select('g.selected-data-label');
+
+        g.selectAll('text').remove();
+        g.selectAll('line').remove();
+        if(filters.selectedJobType){
+            var point = _.find(aggregatedData, function (d) {
+                return d['code'] == filters.selectedJobType;
+            });
+
+
+            g.append('line')
+                .attr('x1',dimensions.width * .8)
+                .attr('x2',dimensions.width * .85)
+                .attr('y1',function(d){return globalScales.wages(point['avgWage']);})
+                .attr('y2',function(d){return globalScales.wages(point['avgWage']);})
+                .attr('stroke',colors.secondary[4]);
+
+            g.append('line')
+                .attr('x1',dimensions.width * .2)
+                .attr('x2',dimensions.width * .15)
+                .attr('y1',function(d){return jScale(point['jobCount']);})
+                .attr('y2',function(d){return jScale(point['jobCount']);})
+                .attr('stroke',colors.secondary[4]);
+
+            g.append('text')
+                .attr('x', dimensions.width * .14)
+                .attr('y', jScale(point['jobCount']) + 5)
+                .attr('text-anchor','end')
+                .text(d3.format(',')(point['jobCount']))
+                .attr('fill',colors.secondary[4]);
+
+
+            g.append('text')
+                .attr('x', dimensions.width * .86)
+                .attr('y', globalScales.wages(point['avgWage']) + 5)
+                .attr('text-anchor','start')
+                .text(d3.format('$,.0f')(point['avgWage']))
+                .attr('fill',colors.secondary[4]);
+
+
+        }
+
+
 
     }
 
@@ -1653,19 +1856,28 @@ h1b.display = function(){
 
     var colors = {
         primary:[
-            '#7AB793',
-            '#4C996B',
-            '#297A4A',
-            '#0F5C2E',
-            '#003D19'
+            '#f0f9e8',
+            '#ccebc5',
+            '#a8ddb5',
+            '#7bccc4',
+            '#43a2ca',
+            '#0868ac'
         ],
         secondary:[
-            '#827FB2',
-            '#595494',
-            '#373276',
-            '#1E1959',
-            '#0C083B'
-        ],
+'#feebe2',
+'#fcc5c0',
+'#fa9fb5',
+'#f768a1',
+'#c51b8a',
+'#7a0177'
+
+       /*     '#feedde',
+            '#fdd0a2',
+            '#fdae6b',
+            '#fd8d3c',
+            '#e6550d',
+            '#a63603'
+      */  ],
         tertiary:[
             '#FFECAA',
             '#D4BC6A',
@@ -1680,7 +1892,14 @@ h1b.display = function(){
             '#802A15',
             '#551000'
         ],
-        blackWhite:[]
+        blackWhite:[
+            '#f7f7f7',
+            '#d9d9d9',
+            '#bdbdbd',
+            '#969696',
+            '#636363',
+            '#252525'
+        ]
     };
 
     var filters = {
@@ -1705,6 +1924,7 @@ h1b.display = function(){
     };
 
     function draw(){
+        container.style('background-color',colors.blackWhite[5]);
         components.title
             .dimensions(dimensions)
             .filters(filters)
@@ -1715,8 +1935,6 @@ h1b.display = function(){
             .filters(filters)
             .colors(colors)
             .data(data);
-
-
 
         components.jobList
             .dimensions(dimensions)
