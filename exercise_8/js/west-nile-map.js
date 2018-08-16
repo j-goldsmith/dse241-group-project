@@ -146,7 +146,7 @@ westNileMap.filter = function(){
             yearMarkers.data(yearOptions)
                 .enter()
                 .append('text')
-                .attr('transform',function(d,i){return 'translate('+((i*(barWidth*52))+ (dimensions.width*.025) + (barWidth*52/2 - 20))+',20)';})
+                .attr('transform',function(d,i){return 'translate('+((i*(barWidth*52))+ (dimensions.width*.025) + (barWidth*52/2 - 20))+',15)';})
                 .attr('fill','lightgrey')
                 .html(function(d){return d;});
         }

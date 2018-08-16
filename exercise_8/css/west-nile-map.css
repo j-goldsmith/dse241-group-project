@@ -1,3 +1,6 @@
+html{
+    font-size:15px;
+}
 div.tooltip {
     position: absolute;
     text-align: left;
@@ -16,3 +19,4 @@ div.tooltip {
 .legend h4{
     margin-bottom:30px;
 }
+

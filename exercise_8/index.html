@@ -13,6 +13,8 @@
 
     <script type="application/javascript" src="js/slider.js"></script>
     <script type="application/javascript" src="js/west-nile-map.js"></script>
+
+
 </head>
 <body>
 <div class="container-fluid">
@@ -38,8 +40,8 @@
     function init(error, weeklyReportsByCounty, countyGeography) {
         if(error) { console.log(error); }
 
-        var w = Math.max(document.documentElement.clientWidth, window.innerWidth || 0) - 30;
-        var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0) - 30;
+        var w = Math.max(document.documentElement.clientWidth, window.innerWidth || 0) - 45;
+        var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0) - 45;
         var map = westNileMap.display()
             .width(w)
             .height(h);

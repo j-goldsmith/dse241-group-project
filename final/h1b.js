@@ -671,7 +671,7 @@ h1b.filterDescription = function(){
         dimensions.parentHeight = value.height;
         dimensions.parentWidth = value.width;
 
-        dimensions.width = value.width * (1/3);
+        dimensions.width = value.width * (1/3.1);
         dimensions.height = value.height * (1/3);
 
         return constructor;
@@ -884,7 +884,7 @@ h1b.map = function(){
         dimensions.parentHeight = value.height;
         dimensions.parentWidth = value.width;
 
-        dimensions.width = value.width * (1/3);
+        dimensions.width = value.width * (1/3.1);
         dimensions.height = value.height * (2/3);
 
         return constructor;
@@ -1108,7 +1108,7 @@ h1b.companyStats = function () {
         container.select('text.wage-title')
             .attr('text-anchor','middle')
             .attr('y',dimensions.height * .13)
-            .attr('x',dimensions.width * .2)
+            .attr('x',dimensions.width * .25)
             .attr('fill','lightgrey');
 
         container.select('text.job-title')
@@ -1231,7 +1231,7 @@ h1b.companyStats = function () {
         dimensions.parentHeight = value.height;
         dimensions.parentWidth = value.width;
 
-        dimensions.width = value.width * (1/3);
+        dimensions.width = value.width * (1/3.1);
         dimensions.height = value.height;
 
         return constructor;
@@ -1451,7 +1451,7 @@ h1b.jobStats = function () {
         container.select('text.wage-title')
             .attr('text-anchor','middle')
             .attr('y',dimensions.height * .13)
-            .attr('x',dimensions.width * .8)
+            .attr('x',dimensions.width * .75)
             .attr('fill','lightgrey');
 
         container.select('text.job-title')
@@ -1572,7 +1572,7 @@ h1b.jobStats = function () {
         dimensions.parentHeight = value.height;
         dimensions.parentWidth = value.width;
 
-        dimensions.width = value.width * (1/3);
+        dimensions.width = value.width * (1/3.1);
         dimensions.height = value.height;
 
         return constructor;
